@@ -1,0 +1,46 @@
+<template>
+  <svg :class="svgClass" aria-hidden="true">
+    <use :xlink:href="iconName"></use>
+  </svg>
+</template>
+
+<script>
+  import '@/icons'
+  export default {
+    name: 'svg-icon',
+    props: {
+      iconClass: {
+        type: String,
+        required: true
+      },
+      className: {
+        type: String
+      }
+    },
+    computed: {
+      iconName() {
+        return `#icon-${this.iconClass}`
+      },
+      svgClass() {
+        if (this.className) {
+          console.log('svg-icon ' + this.className)
+          return 'svg-icon ' + this.className
+        } else {
+          return 'svg-icon'
+        }
+      }
+    },
+    mounted: function() {
+    }
+  }
+</script>
+
+<style scoped>
+  .svg-icon {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.15em;
+    fill: currentcolor;
+    overflow: hidden;
+  }
+</style>

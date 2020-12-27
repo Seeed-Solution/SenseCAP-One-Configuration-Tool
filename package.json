@@ -1,0 +1,61 @@
+{
+  "name": "sensecap_one_cfg_tool",
+  "version": "0.0.1",
+  "private": true,
+  "description": "SenseCAP One Configuration Tool",
+  "author": "Jack Shao <jack.shao@seeed.cc>",
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
+    "electron:build": "vue-cli-service electron:build",
+    "electron:serve": "vue-cli-service electron:serve",
+    "postinstall": "electron-builder install-app-deps",
+    "postuninstall": "electron-builder install-app-deps"
+  },
+  "main": "background.js",
+  "dependencies": {
+    "core-js": "^3.6.4",
+    "crc": "^3.8.0",
+    "dateformat": "^3.0.3",
+    "echarts": "^4.9.0",
+    "electron-create-menu": "^3.0.1",
+    "electron-log": "^4.0.7",
+    "electron-store": "^6.0.0",
+    "electron-updater": "4.3.1",
+    "element-ui": "^2.4.5",
+    "i18next": "^19.3.2",
+    "serialport": "^9.0.3",
+    "svg-sprite-loader": "^5.1.1",
+    "v-charts": "^1.19.0",
+    "vue": "^2.6.11",
+    "vue-i18n": "^8.15.5",
+    "vue-router": "^3.1.5",
+    "vuex": "^3.1.2"
+  },
+  "devDependencies": {
+    "@intlify/vue-i18n-loader": "^1.0.0",
+    "@vue/cli-plugin-babel": "~4.4.6",
+    "@vue/cli-plugin-eslint": "~4.4.6",
+    "@vue/cli-plugin-router": "~4.4.6",
+    "@vue/cli-plugin-vuex": "~4.4.6",
+    "@vue/cli-service": "~4.4.6",
+    "babel-eslint": "^10.0.3",
+    "electron": "^9.1.2",
+    "electron-devtools-installer": "^3.1.1",
+    "electron-notarize": "^1.0.0",
+    "eslint": "^7.6.0",
+    "eslint-plugin-vue": "^6.1.2",
+    "node-sass": "^4.9.2",
+    "sass": "^1.19.0",
+    "sass-loader": "^9.0.3",
+    "vue-cli-plugin-electron-builder": "~2.0.0-rc.4",
+    "vue-cli-plugin-element": "~1.0.1",
+    "vue-template-compiler": "^2.6.11"
+  },
+  "homepage": "https://github.com/Seeed-Solution/SenseCAP-One-Configuration-Tool",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Seeed-Solution/SenseCAP-One-Configuration-Tool"
+  }
+}
