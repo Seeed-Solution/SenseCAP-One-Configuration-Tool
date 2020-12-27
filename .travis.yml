@@ -38,6 +38,6 @@ before_cache:
 
 branches:
   only:
-    - master
+    - main
   except:
     - "/^v\\d+\\.\\d+\\.\\d+$/"

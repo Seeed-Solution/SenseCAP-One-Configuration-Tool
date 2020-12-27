@@ -21,4 +21,4 @@ test: off
 
 branches:
   only:
-    - master
+    - main
