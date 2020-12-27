@@ -28,4 +28,11 @@ function compare2Objects(obj1, obj2) {
 	return true;
 }
 
-export { compare2Objects  };
+function formatLocale(locale) {
+	if (locale.includes('en')) return 'en'
+	else if (locale.includes('zh')) return 'zh'
+	else if (locale.includes('cn')) return 'zh'
+	return 'en'
+}
+
+export { compare2Objects, formatLocale };

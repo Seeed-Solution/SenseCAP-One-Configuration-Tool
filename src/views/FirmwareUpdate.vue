@@ -8,8 +8,26 @@
     "end": "end"
   },
   "zh": {
+    "Target Board": "目标板",
+    "Online Version": "线上版本",
+    "Local File": "本地文件",
+    "Will ignore online version if local file is selected.": "如果选取了本地文件，将忽略线上版本的选择。",
+    "Failed in selecting file.": "选取文件时出错。",
+    "Please Push the Reset Button.": "请轻触设备的复位按钮。",
+    "The device does not support update via this tool.": "设备不支持通过此工具升级。",
+    "Can not detect device, please connect the device.": "检测不到设备，请重连设备服务串口。",
+    "Timeout.": "等待超时。",
+    "The firmware binary is corrupted.": "固件文件坏损。",
+    "The target board is not found on this device.": "您选取的目标板在设备上不存在。",
+    "YModem transfer error happened.": "YModem传输出错。",
+    "Firmware update failed.": "固件升级失败。",
+    "Please reset the device manually.": "请手动复位设备。",
+    "Firmware is updated.": "固件升级成功。",
     "Master Board": "主板",
     "Slave Board": "驱动板",
+    "status: downloading": "正在从互联网下载选择的固件 ...",
+    "status: entering bootloader": "正在进入bootloader ...",
+    "status: ymodem flashing": "正在写入固件 ...",
     "end": "结束"
   }
 }
@@ -312,22 +330,9 @@ export default {
       ipcRenderer.send('close-fwupdate-window')
     },
 
-    formatLocale(locale) {
-      if (locale.includes('en')) return 'en'
-      else if (locale.includes('zh')) return 'zh'
-      else if (locale.includes('cn')) return 'zh'
-      return 'en'
-    },
-
   },
   created() {
-    //locale
-    ipcRenderer.send('locale-req')
-    ipcRenderer.on('locale-resp', (event, arg) => {
-      console.log('local-resp:', arg)
-      this.$root.$i18n.locale = this.formatLocale(arg)
-      console.log(`locale after formatted: ${this.$root.$i18n.locale}`)
-    })
+
     console.log(`locale when created: ${this.$root.$i18n.locale}`)
 
   },

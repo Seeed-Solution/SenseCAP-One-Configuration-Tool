@@ -8,6 +8,7 @@ const Menu = require("electron-create-menu")
 import i18next from 'i18next'
 const { autoUpdater } = require("electron-updater")
 const {yModem} = require('./ymodem')
+import { formatLocale } from './utils'
 const path = require('path')
 const fs = require('fs')
 const fsPromises = fs.promises
@@ -68,8 +69,9 @@ const delayMs = ms => new Promise(res => setTimeout(res, ms))
 /**
  * The Menu's locale only follows the system, the user selection from the GUI doesn't affect
  */
+
 async function translateMenu() {
-  sysLocale = store.get('selectedLocale') || process.env.LOCALE || app.getLocale()
+  sysLocale = formatLocale(store.get('selectedLocale') || process.env.LOCALE || app.getLocale())
   logger.info('the sys locale:', sysLocale)
 
   await i18next.init({

@@ -407,22 +407,8 @@ export default {
       }
     },
 
-    formatLocale(locale) {
-      if (locale.includes('en')) return 'en'
-      else if (locale.includes('zh')) return 'zh'
-      else if (locale.includes('cn')) return 'zh'
-      return 'en'
-    },
-
   },
   created() {
-    //locale
-    ipcRenderer.send('locale-req')
-    ipcRenderer.on('locale-resp', (event, arg) => {
-      console.log('local-resp:', arg)
-      this.$root.$i18n.locale = this.formatLocale(arg)
-      console.log(`locale after formatted: ${this.$root.$i18n.locale}`)
-    })
     console.log(`locale when created: ${this.$root.$i18n.locale}`)
 
     //load config

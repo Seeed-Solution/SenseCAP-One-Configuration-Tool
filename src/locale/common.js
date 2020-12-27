@@ -26,6 +26,8 @@ export default {
       "Operations": "操作",
       "Always-on": "常电型",
       "Sleep": "睡眠型",
+      "deg": "度",
+      "seconds": "秒",
       "minutes": "分",
       "Total": "总共",
       "Per Page": "条每页",

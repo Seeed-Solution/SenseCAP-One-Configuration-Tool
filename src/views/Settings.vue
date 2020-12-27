@@ -28,7 +28,7 @@
     "note101": "The interval of polling data for the main page, range [2, 3600].",
     "note102": "The maximum number of points in each plot, range [10, 100].",
     "text: not ready for reading from device": "Can not detect device, please reconnect the device.",
-    "text: failed reading from device": "Failed in reading device, please check ASCII protocol address and baud rate.",
+    "text: failed reading from device": "Failed in reading device, please check ASCII protocol baud rate.",
     "text: config not loaded from anywhere": "The configuration is incomplete.",
     "text: config hw type not match": "Can not write to a device with different hardware type.",
     "text: not ready for writing to device": "Can not detect device, please reconnect the device.",
@@ -41,7 +41,101 @@
     "end": "end"
   },
   "zh": {
+    "Device": "设备设置",
+    "Application": "应用程序设置",
+    "General": "通用设置",
+    "Main Port Protocol": "主通信协议",
+    "note10": "在服务串口线缆拔出后生效。",
+    "ASCII Protocol Address": "ASCII协议地址",
+    "note11": "有效值 0-9, A-Z, a-z。",
+    "ASCII Protocol Baud Rate": "ASCII协议波特率",
+    "note12": "对服务串口和主通信串口均有效。",
+    "Modbus Address": "Modbus地址",
+    "Modbus Baud Rate": "Modbus波特率",
+    "SDI-12 Address": "SDI-12地址",
+    "note15": "有效值 0-9, A-Z, a-z。",
+    "note16": "最大长度64。",
+    "Factory Reset": "恢复出厂",
+    "Restore Factory Settings": "恢复出厂设置",
+    "Data Combination (G0)": "组合数据 (G0)",
+    "Output List": "输出列表",
+    "note20": "G0数据组的输出列表。",
+    "THPL (G1)": "温湿压光 (G1)",
+    "note30": "G1数据组的输出列表（同时影响主页面的数据更新）。",
+    "Update Interval": "数据更新周期",
+    "note31": "有效范围 [1, 3600]。",
+    "Temperature Unit": "温度单位",
+    "Pressure Unit": "压力单位",
+    "Wind (G2)": "风速风向 (G2)",
+    "note40": "G2数据组的输出列表（同时影响主页面的数据更新）。",
+    "note41": "有效范围 [1, 3600]。",
+    "Averaging Time": "数据平均窗的时长",
+    "note42": "对此时间长度内的风速风向数据进行平均值计算，有效范围 [1, 3600]。",
+    "Sampling Rate": "采样频率",
+    "note43": "表示对风进行测量的频率",
+    "Direction Offset": "风向角偏移量",
+    "note44": "有效范围 [-180, 180]。",
+    "Extremum Calculation Mode": "极值计算方法",
+    "Speed Unit": "风速单位",
+    "Precipitation (G3)": "降雨 (G3)",
+    "note50": "G3数据组的输出列表（同时影响主页面的数据更新）。",
+    "note51": "有效范围 [1, 3600]。",
+    "G3": {
+      "IR": "有效范围 [1, 3600]。",
+      "AL": "有效范围 [10, 80000], 当前单位。",
+      "DL": "有效范围 [100, 2000000]."
+    },
+    "Counter Reset Mode": "计数清零模式",
+    "Rain Accumulation Limit": "累计降雨量极限值",
+    "Rain Duration Limit": "累计降雨时间极限值",
+    "Rain Unit": "雨量单位",
+    "Manual Counter Reset": "手动清零",
+    "Reset Rain Accumulation": "累计降雨量清零",
+    "Reset Rain Duration": "累计降雨时间清零",
+    "Misc. (G9)": "其它 (G9)",
+    "G9": {
+      "ol": "G9数据组的输出列表（同时影响主页面的数据更新）。",
+      "uih": "有效范围 [15, 3600], 当使能辅热功能时，此值将被算法固定为15，不管此处设置为何值。"
+    },
+    "Update Interval of Heater Temperature": "加热区域温度的采集周期",
+    "Heating Control": "辅热控制",
+    "Data Poll Interval": "数据拉取周期",
+    "note101": "主页面数据从设备拉取的周期, 有效范围 [2, 3600]。",
+    "Plot Deepth": "曲线深度",
+    "note102": "数据曲线中数据点的数量, 有效范围 [10, 100]。",
+    "Language": "界面语言",
+    "Version": "版本",
+    "Load From File": "从文件中加载",
+    "Save To File": "保存到文件",
+    "Read From Device": "从设备中读取",
+    "Write To Device": "写入到设备",
+    "Invalid Address.": "无效地址。",
+    "Invalid Modbus Address.": "无效Modbus地址。",
+    "Invalid Device Name.": "无效设备名称。",
+    "Invalid Number.": "无效数字。",
+    "Manual Reset": "手动清零模式",
+    "Reset After Read": "读后清零模式",
+    "Overflow Reset": "溢出清零模式",
     "available": "可下载",
+    "The application configurations are saved.": "应用程序的配置已被保存。",
+    "text: not ready for reading from device": "检测不到设备，请重连设备服务串口。",
+    "text: failed reading from device": "读取设备失败，请检查服务串口波特率。",
+    "The device configurations are written.": "设备设置已被写入。",
+    "text: config not loaded from anywhere": "配置不完整。",
+    "text: config hw type not match": "设备型号不匹配，无法写入。",
+    "text: not ready for writing to device": "检测不到设备，请重连设备服务串口。",
+    "text: failed writing to device": "写入设备失败。",
+    "Failed to restore!": "恢复出厂设置失败。",
+    "Failed to reset!": "清零失败。",
+    "text: restore factory notice": "此操作将恢复所有设置到出厂默认值，确定继续？",
+    "text: restore factory success": "成功恢复到出厂设置，请用9600波特率重新连接服务串口。",
+    "text: reset counters": "此操作将清零选定累计值，确定继续？",
+    "text: reset success": "选定的累计值已被成功清零。",
+    "Saved to file successfully.": "成功保存到文件。",
+    "Failed in saving to file.": "保存到文件时出错。",
+    "Loaded from file successfully.": "成功加载配置文件。",
+    "Failed in parsing the file, invalid profile version.": "解析配置文件时出错，错误的Profile版本。",
+    "Failed in loading from file, invalid profile file.": "加载配置文件时出错，格式无效。",
 
     "end": "结束"
   }
@@ -57,11 +151,11 @@
         @select="onMenuSelect">
         <el-menu-item index="1">
           <svg-icon icon-class="sensecap-one" class="myicon"></svg-icon>
-          <span slot="title">Device</span>
+          <span slot="title">{{$t('Device')}}</span>
         </el-menu-item>
         <el-menu-item index="2">
           <i class="el-icon-s-platform"></i>
-          <span slot="title">Application</span>
+          <span slot="title">{{$t('Application')}}</span>
         </el-menu-item>
       </el-menu>
     </el-aside>
@@ -253,7 +347,7 @@
                         <el-option v-for="item in baudRates" :key="item" :value="item"></el-option>
                       </el-select>
                     </el-form-item> -->
-                    <el-form-item :label="$t('Pressure Unit')" prop="US"
+                    <el-form-item :label="$t('Speed Unit')" prop="US"
                       :rules="[rules.required]">
                       <el-select v-model="configMap.US">
                         <el-option v-for="item in unitOptions['US']"
@@ -342,7 +436,7 @@
                       </el-select>
                       <div class="text-note">{{$t('G9.ol')}}</div>
                     </el-form-item> -->
-                    <!-- <el-form-item :label="$t('Update Interval of Device Temperature')" v-if="showG9Ht" prop="IH"
+                    <!-- <el-form-item :label="$t('Update Interval of Heater Temperature')" v-if="showG9Ht" prop="IH"
                       :rules="[rules.required, rules.rng15_3600]">
                       <el-input v-model="configMap.IH" type="number">
                         <template slot="append">{{$t('seconds')}}</template>
@@ -438,7 +532,10 @@
 }
 .text-note {
   font-size: 10px;
-  line-height: 14px;
+  height: 16px;
+  line-height: 12px;
+  display: table-cell;
+  vertical-align: bottom;
   color: #909399;
 }
 .text-subheader {
@@ -583,11 +680,6 @@ export default {
         {value: 4, label: "4Hz"},
       ],
       optionsS1G3: [],
-      optionsCounterResetMode: [
-        {value: "M", label: "M - " + this.$t("Manual Reset")},
-        {value: "A", label: "A - " + this.$t("Reset After Read")},
-        {value: "L", label: "L - " + this.$t("Overflow Reset")},
-      ],
       optionsG9: [],
 
       configMap: {
@@ -630,6 +722,17 @@ export default {
     }
   },
   computed: {
+    //to let i18n hot change
+    optionsCounterResetMode: function() {
+      if (this.selectedLocale) {
+        return [
+          {value: "M", label: "M - " + this.$t("Manual Reset")},
+          {value: "A", label: "A - " + this.$t("Reset After Read")},
+          {value: "L", label: "L - " + this.$t("Overflow Reset")},
+        ]
+      }
+      return []
+    },
     newVersionTooltip: function() {
       return 'v' + this.newVersion + ' ' + this.$t('available')
     },
@@ -647,13 +750,6 @@ export default {
     },
 
     //App Configs
-    formatLocale(locale) {
-      if (locale.includes('en')) return 'en'
-      else if (locale.includes('zh')) return 'zh'
-      else if (locale.includes('cn')) return 'zh'
-      return 'en'
-    },
-
     versionClicked() {
       if (this.newVersion) {
         ipcRenderer.send('goto-new-version')
@@ -1004,20 +1100,13 @@ export default {
     }
   },
   created() {
-    //locale
-    ipcRenderer.send('locale-req')
-    ipcRenderer.on('locale-resp', (event, arg) => {
-      console.log('local-resp:', arg)
-      this.selectedLocale = this.localeBackup = this.formatLocale(arg)
-      this.$root.$i18n.locale = this.selectedLocale
-      console.log(`locale after formatted: ${this.selectedLocale}`)
-    })
+
     console.log(`locale when created: ${this.$root.$i18n.locale}`)
+    this.selectedLocale = this.localeBackup = this.$root.$i18n.locale
 
     //load config
     this.appConfig.dataPollInterval = parseInt(store.get('dataPollInterval', 2))
     this.appConfig.plotPointNum = parseInt(store.get('plotPointNum', 10))
-    this.selectedLocale = store.get('selectedLocale', 'en')
 
   },
   mounted() {
@@ -1056,13 +1145,6 @@ export default {
       this.newVersion = arg
       document.getElementById('versionText').style.cursor = 'pointer'
     })
-
-    //selected work dir
-    ipcRenderer.on('select-dir-resp', (event, arg) => {
-      console.log(`select-dir-resp: ${arg}`)
-      this.dialogWorkDir = arg
-    })
-
 
   },
   beforeDestroy() {
