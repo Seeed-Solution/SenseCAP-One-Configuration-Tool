@@ -374,6 +374,8 @@ if (isDevelopment) {
   if (process.platform === 'win32') {
     process.on('message', data => {
       if (data === 'graceful-exit') {
+        serialClose()
+        ipcMain.removeAllListeners()
         app.quit()
       }
     })
