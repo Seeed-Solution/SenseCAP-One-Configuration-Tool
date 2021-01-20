@@ -656,7 +656,7 @@ export default {
       optionsMainPortProto: [
         {value: 1, label: "SDI-12"},
         {value: 2, label: "RS-232 Modbus RTU"},
-        {value: 3, label: "RS-484 Modbus RTU"},
+        {value: 3, label: "RS-485 Modbus RTU"},
         {value: 4, label: "RS-422 Modbus RTU"},
         {value: 5, label: "RS-232 ASCII"},
         {value: 6, label: "RS-485 ASCII"},
@@ -836,7 +836,7 @@ export default {
       }
       this.unitOptions = unitOptions1
       this.showG0 = this.optionsG0.length > 0
-      this.showS1G1 = this.showS1G2 = this.showS1G3 = this.showG9 = this.showG9Ht = '1' in this.i2cAddrInCurrentCfg
+      this.showS1G1 = this.showS1G2 = this.showS1G3 = /*this.showG9 = this.showG9Ht =*/ '1' in this.i2cAddrInCurrentCfg
       this.guiRendered = true
     },
 

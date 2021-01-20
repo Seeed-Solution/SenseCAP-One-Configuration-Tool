@@ -47,7 +47,7 @@ exports.miscGroupDefine = {
   grpNameShort: "G9",
   grpName: "Misc.",
   meas: {
-    "HT": { name: "Heating Temperature", unit: '℃', unitSuffix: '', i2cAddr: ["1"] },
+    "HT": { name: "Heating Temperature", unit: '℃', unitSuffix: '', i2cAddr: ["1XX"] },
   }
 }
 
