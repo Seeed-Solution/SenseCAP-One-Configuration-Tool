@@ -55,6 +55,7 @@ const parser = stream.pipe(new ReadlineParser())
 //ASCII protocol
 let ee = new EventEmitter()
 let ee2 = new EventEmitter()
+let ee3 = new EventEmitter()
 let hIntervalQueryApAddr
 let apAddr
 let apCmdProcessing = false
@@ -297,8 +298,7 @@ function createFwUpdateWindow (showAfterCreated = false) {
     if (win) {
       logger.debug(`winFwUpdate is going to be closed, but we skip that`)
       e.preventDefault()
-      if (updating < 2) winFwUpdate.hide()
-      if (updating === 1) ee2.emit('error', 'user canceled')
+      broadcastMultiWindows('confirm-cancel-update', null, winFwUpdate)
     } else {
       logger.debug(`winFwUpdate is going to be closed, since win = null`)
     }
@@ -897,15 +897,8 @@ ipcMain.handle('enter-bootloader', async (event, i2cAddr) => {
   }
 })
 
-let updateTimeoutHandler
 async function progressCallback(val) {
   broadcastMultiWindows('progress', val.toFixed(1), winFwUpdate)
-}
-
-async function updateTimeout() {
-  broadcastMultiWindows('update-fw-end', null, winFwUpdate)
-  updating = 0
-  updateTimeoutHandler = null
 }
 
 function ymodemWrite(chunk, resolve, reject) {
@@ -939,7 +932,6 @@ ipcMain.handle('ymodem-update', async (event, i2cAddr, fwPath) => {
       await delayMs(1000)
 
       broadcastMultiWindows('update-fw-begin', null, winFwUpdate, win)
-      updateTimeoutHandler = setTimeout(updateTimeout, 600000)
 
       ymodem.clearStream()
       ymodem.on('progress', progressCallback)
@@ -947,18 +939,23 @@ ipcMain.handle('ymodem-update', async (event, i2cAddr, fwPath) => {
       updating = 2
       let pendingError
       try {
-        await ymodem.transfer(fileContent)
+        let timeoutPromise = new Promise((resolve, reject) => {
+          setTimeout(() => {
+            reject(new Error('overall timeout'))
+          }, 600000)
+        })
+        await Promise.race([ymodem.transfer(fileContent), timeoutPromise, once(ee3, 'whatever')])
       } catch (error) {
         logger.warn('ymodem transfer error:', error)
-        pendingError = new Error('yModem transfer error')
+        if (error.message.includes('overall timeout')) {
+          pendingError = error
+        }
+        else pendingError = new Error('yModem transfer error')
       }
       updating = 0
       ymodem.removeAllListeners('progress')
       ymodem.removeAllListeners('tx')
-      if (updateTimeoutHandler) {
-        clearTimeout(updateTimeoutHandler)
-        updateTimeoutHandler = null
-      }
+
       if (pendingError) throw pendingError
       broadcastMultiWindows('update-fw-end', null, winFwUpdate, win)
     } else {
@@ -1023,6 +1020,9 @@ ipcMain.on('open-fwupdate-window', (event) => {
 ipcMain.on('close-fwupdate-window', (event) => {
   logger.info('ipc: close-fwupdate-window ...')
   if (winFwUpdate) {
+    if (updating >= 1) {
+      ee3.emit('error', 'user canceled')
+    }
     winFwUpdate.hide()
     //winFwUpdate.close()
   }

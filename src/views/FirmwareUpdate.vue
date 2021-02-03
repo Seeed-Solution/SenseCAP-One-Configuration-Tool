@@ -4,6 +4,7 @@
     "status: downloading": "Downloading the selected firmware from internet ...",
     "status: entering bootloader": "Entering the bootloader ...",
     "status: ymodem flashing": "Flashing the device ...",
+    "text: confirm cancel update": "This might break your device, are you sure to cancel the update?",
 
     "end": "end"
   },
@@ -17,6 +18,7 @@
     "The device does not support update via this tool.": "设备不支持通过此工具升级。",
     "Can not detect device, please connect the device.": "检测不到设备，请重连设备服务串口。",
     "Timeout.": "等待超时。",
+    "Overall timeout.": "升级超时。",
     "The firmware binary is corrupted.": "固件文件坏损。",
     "The target board is not found on this device.": "您选取的目标板在设备上不存在。",
     "YModem transfer error happened.": "YModem传输出错。",
@@ -28,6 +30,8 @@
     "status: downloading": "正在从互联网下载选择的固件 ...",
     "status: entering bootloader": "正在进入bootloader ...",
     "status: ymodem flashing": "正在写入固件 ...",
+    "text: confirm cancel update": "这个操作可能损坏您的设备，确定继续？",
+
     "end": "结束"
   }
 }
@@ -306,6 +310,8 @@ export default {
           this.$message.error(this.$t('Can not detect device, please connect the device.'))
         } else if (errorMsg.includes('timeout waiting reboot')) {
           this.$message.error(this.$t('Timeout.'))
+        } else if (errorMsg.includes('overall timeout')) {
+          this.$message.error(this.$t('Overall timeout.'))
         } else if (errorMsg.includes('fw file is empty')) {
           this.$message.error(this.$t('The firmware binary is corrupted.'))
         } else if (errorMsg.includes('target board not found')) {
@@ -413,6 +419,18 @@ export default {
         message: this.$t('Please reset the device manually.'),
         duration: 5000,
         offset: 60
+      })
+    })
+    ipcRenderer.on('confirm-cancel-update', (event) => {
+      console.log('recv confirm-cancel-update ...')
+      this.$confirm(this.$t('text: confirm cancel update'), this.$t('Please confirm'), {
+        confirmButtonText: this.$t('Yes'),
+        cancelButtonText: this.$t('No'),
+        type: 'warning'
+      }).then(() => {
+        this.closeWindowFn()
+      }).catch(() => {
+        console.log('continue updating...')
       })
     })
 
