@@ -30,7 +30,7 @@ exports.changableUnitsMeasMap = {
 const units = {
   "UT": { "C": "℃", "F": "℉" },
   "UP": { "H": "hPa", "P": "Pa", "B": "Bar", "M": "mmHg", "I": "inHg" },
-  "US": { "M": "m/s", "K": "km/s", "S": "mph", "N": "knots" },
+  "US": { "M": "m/s", "K": "km/h", "S": "mph", "N": "knots" },
   "UR": { "M": "mm", "I": "inch" },
 }
 exports.units = units

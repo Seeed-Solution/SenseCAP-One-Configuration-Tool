@@ -565,6 +565,12 @@ export default {
       }
     })
 
+    //unit change
+    ipcRenderer.on('unit-change', (event) => {
+      console.log(`received unit-change event, reloading units from device ...`)
+      this.queryUnits()
+    })
+
     //baud rate change
     ipcRenderer.on('baud-rate-change', (event, arg) => {
       console.log(`received baud-rate-change event, changed to ${arg}`)

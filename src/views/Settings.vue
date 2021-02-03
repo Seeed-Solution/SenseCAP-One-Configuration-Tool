@@ -81,7 +81,7 @@
     "note50": "G3数据组的输出列表（同时影响主页面的数据更新）。",
     "note51": "有效范围 [1, 3600]。",
     "G3": {
-      "IR": "有效范围 [1, 3600]。",
+      "IR": "有效范围 [10, 3600]。",
       "AL": "有效范围 [10, 80000], 当前单位。",
       "DL": "有效范围 [100, 2000000]."
     },
@@ -858,6 +858,8 @@ export default {
             let v = result[regName]
             if (typeof this.configMap[regName] === 'number') {
               v = parseInt(v)
+            } else if (this.configMap[regName] instanceof Array && typeof v === 'string') {
+              v = [v]
             }
             this.configMap[regName] = v
           } else {
@@ -900,6 +902,7 @@ export default {
         }
       }
       let regListChanged = []
+      let unitRegChanged = false
       for (const reg of regList) {
         if (reg in this.configMap && reg in this.configMapInDevice) {
           if (typeof this.configMap[reg] === 'object') {
@@ -910,6 +913,7 @@ export default {
             if (this.configMap[reg] === this.configMapInDevice[reg]) continue
           }
         }
+        if (reg in changableUnitsMeasMap) unitRegChanged = true
         regListChanged.push(reg)
       }
       console.log('reg changed:', regListChanged)
@@ -932,6 +936,12 @@ export default {
         //   duration: 2000,
         // })
       }
+
+      //if any unit changed
+      delayMs(100).then(() => {
+        ipcRenderer.send('broadcast-to-others', 'unit-change')
+      })
+
       this.$message({
         type: 'success',
         message: this.$t('The device configurations are written.')
