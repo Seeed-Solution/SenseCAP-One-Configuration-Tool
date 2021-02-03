@@ -938,9 +938,10 @@ export default {
       }
 
       //if any unit changed
-      delayMs(100).then(() => {
+      if (unitRegChanged) {
+        await delayMs(100)
         ipcRenderer.send('broadcast-to-others', 'unit-change')
-      })
+      }
 
       this.$message({
         type: 'success',
