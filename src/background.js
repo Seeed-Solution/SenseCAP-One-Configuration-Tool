@@ -55,7 +55,6 @@ const parser = stream.pipe(new ReadlineParser())
 //ASCII protocol
 let ee = new EventEmitter()
 let ee2 = new EventEmitter()
-let ee3 = new EventEmitter()
 let hIntervalQueryApAddr
 let apAddr
 let apCmdProcessing = false
@@ -298,7 +297,12 @@ function createFwUpdateWindow (showAfterCreated = false) {
     if (win) {
       logger.debug(`winFwUpdate is going to be closed, but we skip that`)
       e.preventDefault()
-      broadcastMultiWindows('confirm-cancel-update', null, winFwUpdate)
+      if (updating > 0) {
+        broadcastMultiWindows('confirm-cancel-update', null, winFwUpdate)
+      } else {
+        broadcastMultiWindows('hide-fwupdate-window', null, winFwUpdate)
+        winFwUpdate.hide()
+      }
     } else {
       logger.debug(`winFwUpdate is going to be closed, since win = null`)
     }
@@ -944,10 +948,11 @@ ipcMain.handle('ymodem-update', async (event, i2cAddr, fwPath) => {
             reject(new Error('overall timeout'))
           }, 600000)
         })
-        await Promise.race([ymodem.transfer(fileContent), timeoutPromise, once(ee3, 'whatever')])
+        await Promise.race([ymodem.transfer(fileContent), timeoutPromise, once(ee2, 'whatever')])
       } catch (error) {
         logger.warn('ymodem transfer error:', error)
-        if (error.message.includes('overall timeout')) {
+        let errorMsg = error.message
+        if (errorMsg.includes('overall timeout') || errorMsg.includes('user canceled')) {
           pendingError = error
         }
         else pendingError = new Error('yModem transfer error')
@@ -957,6 +962,8 @@ ipcMain.handle('ymodem-update', async (event, i2cAddr, fwPath) => {
       ymodem.removeAllListeners('tx')
 
       if (pendingError) throw pendingError
+
+      //succ
       broadcastMultiWindows('update-fw-end', null, winFwUpdate, win)
     } else {
       throw new Error('fw file is empty')
@@ -1021,8 +1028,9 @@ ipcMain.on('close-fwupdate-window', (event) => {
   logger.info('ipc: close-fwupdate-window ...')
   if (winFwUpdate) {
     if (updating >= 1) {
-      ee3.emit('error', 'user canceled')
+      ee2.emit('error', new Error('user canceled'))
     }
+    broadcastMultiWindows('hide-fwupdate-window', null, winFwUpdate)
     winFwUpdate.hide()
     //winFwUpdate.close()
   }

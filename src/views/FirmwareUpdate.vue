@@ -243,7 +243,18 @@ export default {
       })
     },
 
+    messageError(msg) {
+      this.$message({
+        type: 'error',
+        message: msg,
+        duration: 0,
+        showClose: true
+      })
+    },
+
     doUpdateFn() {
+      //close all messagebox first
+      this.$message.closeAll()
       //validate
       let formValid = false
       this.$refs['form1'].validate((valid) => formValid = valid)
@@ -305,23 +316,23 @@ export default {
         console.log('doUpdateFn:', error)
         let errorMsg = error.message
         if (errorMsg.includes('bootloader not supported')) {
-          this.$message.error(this.$t('The device does not support update via this tool.'))
+          this.messageError(this.$t('The device does not support update via this tool.'))
         } else if (errorMsg.includes('serial not ready')) {
-          this.$message.error(this.$t('Can not detect device, please connect the device.'))
+          this.messageError(this.$t('Can not detect device, please connect the device.'))
         } else if (errorMsg.includes('timeout waiting reboot')) {
-          this.$message.error(this.$t('Timeout.'))
+          this.messageError(this.$t('Timeout.'))
         } else if (errorMsg.includes('overall timeout')) {
-          this.$message.error(this.$t('Overall timeout.'))
+          this.messageError(this.$t('Overall timeout.'))
         } else if (errorMsg.includes('fw file is empty')) {
-          this.$message.error(this.$t('The firmware binary is corrupted.'))
+          this.messageError(this.$t('The firmware binary is corrupted.'))
         } else if (errorMsg.includes('target board not found')) {
-          this.$message.error(this.$t('The target board is not found on this device.'))
+          this.messageError(this.$t('The target board is not found on this device.'))
         } else if (errorMsg.includes('yModem transfer error')) {
-          this.$message.error(this.$t('YModem transfer error happened.'))
+          this.messageError(this.$t('YModem transfer error happened.'))
         } else if (errorMsg.includes('user canceled')) {
-          console.log('user canceled entering bootloader')
+          console.log('user canceled updating')
         } else {
-          this.$message.error(this.$t('Firmware update failed.'))
+          this.messageError(this.$t('Firmware update failed.'))
         }
 
       }).finally(() => {
@@ -332,6 +343,7 @@ export default {
     },
 
     closeWindowFn() {
+      this.$message.closeAll()
       console.log('going to send IPC close-fwupdate-window')
       ipcRenderer.send('close-fwupdate-window')
     },
@@ -409,17 +421,11 @@ export default {
     ipcRenderer.on('update-fw-end', (event) => {
       // this.isUpdating = false
       console.log('fw update end ...')
-      this.$message({
-        type: 'success',
-        message: this.$t('Firmware is updated.'),
-        duration: 5000
-      })
-      this.$message({
-        type: 'warning',
-        message: this.$t('Please reset the device manually.'),
-        duration: 5000,
-        offset: 60
-      })
+      this.$alert(this.$t('Firmware is updated.') + " " + this.$t('Please reset the device manually.'), {
+        type: "success",
+        confirmButtonText: this.$t('OK'),
+        showClose: false
+      }).then(console.log).catch(console.log)
     })
     ipcRenderer.on('confirm-cancel-update', (event) => {
       console.log('recv confirm-cancel-update ...')
@@ -433,6 +439,11 @@ export default {
         console.log('continue updating...')
       })
     })
+    ipcRenderer.on('hide-fwupdate-window', (event) => {
+      console.log('recv hide-fwupdate-window event ...')
+      this.$message.closeAll()
+    })
+
 
   },
   beforeDestroy() {

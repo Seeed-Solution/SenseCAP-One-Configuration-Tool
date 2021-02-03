@@ -211,7 +211,7 @@
                     <el-form-item :label="$t('Modbus Baud Rate')" prop="MBBD"
                       :rules="[rules.required]">
                       <el-select v-model="configMap.MBBD">
-                        <el-option v-for="item in optionsBaudRates"
+                        <el-option v-for="item in optionsModbusBaudRates"
                           :key="item.value"
                           :value="item.value"
                           :label='item.label'></el-option>
@@ -663,6 +663,16 @@ export default {
         {value: 7, label: "RS-422 ASCII"},
       ],
       optionsBaudRates: [
+        {value: 96, label: "9600"},
+        {value: 192, label: "19200"},
+        {value: 384, label: "38400"},
+        {value: 576, label: "57600"},
+        {value: 1152, label: "115200"},
+      ],
+      optionsModbusBaudRates: [
+        {value: 12, label: "1200"},
+        {value: 24, label: "2400"},
+        {value: 48, label: "4800"},
         {value: 96, label: "9600"},
         {value: 192, label: "19200"},
         {value: 384, label: "38400"},
