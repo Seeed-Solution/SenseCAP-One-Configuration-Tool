@@ -1,7 +1,8 @@
 <i18n>
 {
   "en": {
-    "note10": "Apply after the service cable is unplugged.",
+    "note10": "Apply after the service cable is unplugged, ",
+    "note10-1": "changable for Service Port only.",
     "note11": "Valid range 0-9, A-Z, a-z.",
     "note12": "Apply for both Service Port and Main Port.",
     "note15": "Valid range 0-9, A-Z, a-z.",
@@ -45,7 +46,8 @@
     "Application": "应用程序设置",
     "General": "通用设置",
     "Main Port Protocol": "主通信协议",
-    "note10": "在服务串口线缆拔出后生效。",
+    "note10": "在服务串口线缆拔出后生效，",
+    "note10-1": "仅能通过服务串口修改。",
     "ASCII Protocol Address": "ASCII协议地址",
     "note11": "有效值 0-9, A-Z, a-z。",
     "ASCII Protocol Baud Rate": "ASCII协议波特率",
@@ -185,7 +187,7 @@
                           :value="item.value"
                           :label='item.label'></el-option>
                       </el-select>
-                      <div class="text-note">{{$t('note10')}}</div>
+                      <div class="text-note">{{$t('note10')}}<span style="font-weight: bold;color: #808389;">{{$t('note10-1')}}</span></div>
                     </el-form-item>
                     <el-form-item :label="$t('ASCII Protocol Address')" prop="AD"
                       :rules="[rules.required, rules.charAddr]">
@@ -694,7 +696,7 @@ export default {
 
       configMap: {
         CP: 3,
-        AD: 0,
+        AD: '0',
         BD: 96,
         MBAD: 1,
         MBBD: 96,
@@ -859,6 +861,10 @@ export default {
         }
       }
       console.log('all reg to be read:', regList)
+
+      //read AD first
+      ipcRenderer.send('ap-addr-req')
+      await delayMs(100)
 
       for (const regName of regList) {
         let result = await ipcRenderer.invoke('ap-req-with-retry', `${regName}=?`, `${regName}=`, 500)
@@ -1136,8 +1142,8 @@ export default {
       if (arg != this.apAddr) {
         console.log(`ascii protocol address got (${arg})`)
         this.apAddr = arg
-        this.configMap['AD'] = arg
       }
+      this.configMap['AD'] = arg
     })
     if (!this.apAddr) {
       ipcRenderer.send('ap-addr-req')
