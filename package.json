@@ -1,6 +1,6 @@
 {
   "name": "sensecap_one_cfg_tool",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "private": true,
   "description": "SenseCAP One Configuration Tool",
   "author": "Jack Shao <jack.shao@seeed.cc>",
@@ -15,6 +15,7 @@
   },
   "main": "background.js",
   "dependencies": {
+    "compare-versions": "^3.6.0",
     "core-js": "^3.6.4",
     "crc": "^3.8.0",
     "dateformat": "^3.0.3",

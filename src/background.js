@@ -758,28 +758,39 @@ ipcMain.on('ap-addr-req', (event) => {
   event.reply('ap-addr-got', apAddr)
 })
 
+async function queryI2CAddrAndVersions(...args) {
+  logger.info('queryI2CAddrAndVersions with args', args)
+  let versionsObj = await apRequestAsync('VE=?', 'VE=', 2000)
+  let versionsArray = versionsObj['VE']
+  let slaveVersionMap = {}
+  let [withSw] = args
+  for (const versionPart of versionsArray) {
+    let [key, value] = versionPart.split('-')
+    if (key.startsWith('S') && key !== 'SW') {
+      slaveVersionMap[key.slice(1)] = value
+    }
+    if (withSw && key === 'SW') {
+      slaveVersionMap[key] = value
+    }
+  }
+  return slaveVersionMap
+}
+
 ipcMain.on('i2c-list-req', async (event, ...args) => {
   logger.info('i2c-list-req ...')
   try {
-    let versionsObj = await apRequestAsync('VE=?', 'VE=', 2000)
-    let versionsArray = versionsObj['VE']
-    let slaveVersionMap = {}
-    let [withSw] = args
-    for (const versionPart of versionsArray) {
-      let [key, value] = versionPart.split('-')
-      if (key.startsWith('S') && key !== 'SW') {
-        slaveVersionMap[key.slice(1)] = value
-      }
-      if (withSw && key === 'SW') {
-        slaveVersionMap[key] = value
-      }
-    }
+    let slaveVersionMap = await queryI2CAddrAndVersions(args)
     logger.debug('slaveVersionMap:', slaveVersionMap)
     event.reply('i2c-list-got', slaveVersionMap)
   } catch (error) {
     logger.warn('error when query VE:', error)
     event.reply('i2c-list-got-error', error)
   }
+})
+
+ipcMain.handle('i2c-list-versions-req', async(event, ...args) => {
+  logger.info('i2c-list-versions-req ...')
+  return await queryI2CAddrAndVersions(args)
 })
 
 // AutoUpdater
@@ -886,6 +897,7 @@ ipcMain.handle('enter-bootloader', async (event, i2cAddr) => {
     } catch (error) {
       throw new Error('serial not ready')
     }
+    broadcastMultiWindows('slave-devices-detected', slaveDevicesJson, winFwUpdate)
     throw new Error('target board not found')
   } catch (error) {
     clearInterval(hi)

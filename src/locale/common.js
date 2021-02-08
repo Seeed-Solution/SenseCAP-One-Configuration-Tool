@@ -72,6 +72,7 @@ export default {
       "Connect": "连接",
       "Disconnect": "断开",
       "Firmware Update": "固件升级",
+      "Start": "开始",
       //对话框
       "Please confirm": "请确认",
       "Error: ": "发生了错误：",

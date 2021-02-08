@@ -74,7 +74,9 @@
             :text-inside="true"
             :stroke-width="20"
             :percentage="progress"></el-progress>
-          <span class="text-note" style="color: white;">{{infoText}}</span>
+        </div>
+        <div>
+          <span class="text-note" style="color: #f2f2f2;">{{infoText}}</span>
         </div>
       </el-form>
     </el-main>
@@ -255,6 +257,7 @@ export default {
     doUpdateFn() {
       //close all messagebox first
       this.$message.closeAll()
+      this.infoText = ""
       //validate
       let formValid = false
       this.$refs['form1'].validate((valid) => formValid = valid)
@@ -306,12 +309,14 @@ export default {
         return ipcRenderer.invoke('enter-bootloader', this.ruleForm.targetBoard)
       }).then((slaveDevices) => {
         console.log('slaveDevices:', slaveDevices)
-        this.infoText = JSON.stringify(slaveDevices)
+        this.infoText = 'bootloaders: ' + JSON.stringify(slaveDevices)
         console.log('start to do ymodem update ...')
         this.statusText = this.$t("status: ymodem flashing")
         this.progress = 0
         this.loading.close()
         return ipcRenderer.invoke('ymodem-update', this.ruleForm.targetBoard, this.fwPath)
+      }).then(() => {
+        this.infoText = ""
       }).catch((error) => {
         console.log('doUpdateFn:', error)
         let errorMsg = error.message
@@ -344,6 +349,7 @@ export default {
 
     closeWindowFn() {
       this.$message.closeAll()
+      this.infoText = ""
       console.log('going to send IPC close-fwupdate-window')
       ipcRenderer.send('close-fwupdate-window')
     },
@@ -382,7 +388,6 @@ export default {
       if (arg != this.apAddr) {
         console.log(`ascii protocol address got (${arg}), let's get started!`)
         this.apAddr = arg
-        // setImmediate(this.reqDeviceInfo)
       }
     })
 
@@ -442,8 +447,11 @@ export default {
     ipcRenderer.on('hide-fwupdate-window', (event) => {
       console.log('recv hide-fwupdate-window event ...')
       this.$message.closeAll()
+      this.infoText = ""
     })
-
+    ipcRenderer.on('slave-devices-detected', (event, slaveDevices) => {
+      this.infoText = 'bootloaders: ' + JSON.stringify(slaveDevices)
+    })
 
   },
   beforeDestroy() {

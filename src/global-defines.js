@@ -17,7 +17,8 @@ exports.grpNameTransZh = {
   "Rain Intensity": "降雨强度",
   "Rain Peak Intensity": "降雨强度峰值",
   "Misc.": "其他",
-  "Heating Temperature": "加热区域温度"
+  "Heating Temperature": "加热区域温度",
+  "Tilt Status": "倾倒状态"
 }
 
 exports.changableUnitsMeasMap = {
@@ -47,7 +48,8 @@ exports.miscGroupDefine = {
   grpNameShort: "G9",
   grpName: "Misc.",
   meas: {
-    "HT": { name: "Heating Temperature", unit: '℃', unitSuffix: '', i2cAddr: ["1XX"] },
+    "HT": { name: "Heating Temperature", unit: '℃', unitSuffix: '', i2cAddr: ["1"], drvVer: ["2.9"], commVer: ["2.8"] },
+    "TILT": { name: "Tilt Status", unit: '', unitSuffix: '', i2cAddr: ["1"], drvVer: ["2.8"], commVer: ["2.8"] },
   }
 }
 

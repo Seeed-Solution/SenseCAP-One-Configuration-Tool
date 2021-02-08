@@ -24,7 +24,10 @@
     },
     "G9": {
       "ol": "The output list for G9 poll, this also affects the data updating for main page.",
-      "uih": "Valid range [15, 3600], if heating is enabled, this interval is set to 15 seconds implicitly."
+      "uih": "Valid range [15, 3600], if heating is enabled, this interval is set to 15 seconds implicitly.",
+      "cc": "If enabled, the device can be installed in arbitrary direction, it will find the north with the assistance of compass sensor.",
+      "calib": "Cycle around the vertical axis for 1~2 turns, meanwhile keep the device vertical for at least 30 seconds.",
+      "calibDialog": "Once started, the device will collect the calibration data for 30 seconds, and can't be stopped."
     },
     "note101": "The interval of polling data for the main page, range [2, 3600].",
     "note102": "The maximum number of points in each plot, range [10, 100].",
@@ -97,10 +100,20 @@
     "Misc. (G9)": "其它 (G9)",
     "G9": {
       "ol": "G9数据组的输出列表（同时影响主页面的数据更新）。",
-      "uih": "有效范围 [15, 3600], 当使能辅热功能时，此值将被算法固定为15，不管此处设置为何值。"
+      "uih": "有效范围 [15, 3600], 当使能辅热功能时，此值将被算法固定为15，不管此处设置为何值。",
+      "cc": "使能此功能，可以以任意方位角安装设备，设备将利用地磁传感器自动指北。",
+      "calib": "将设备绕垂直中心轴旋转1~2周，此过程中保持设备垂直至少30秒。",
+      "calibDialog": "开始后，设备将在后台收集校准数据30秒，无法中断。"
     },
     "Update Interval of Heater Temperature": "加热区域温度的采集周期",
     "Heating Control": "辅热控制",
+    "Tilt Detection": "倾倒检测",
+    "Auto North": "地磁辅助指北",
+    "Compass Calibration": "地磁传感器校准",
+    "Calibrate": "校准",
+    "Calibrating": "校准中",
+    "Background": "后台进行",
+    "Failed to start the calibration!": "发送校准指令失败。",
     "Data Poll Interval": "数据拉取周期",
     "note101": "主页面数据从设备拉取的周期, 有效范围 [2, 3600]。",
     "Plot Deepth": "曲线深度",
@@ -127,6 +140,7 @@
     "text: config hw type not match": "设备型号不匹配，无法写入。",
     "text: not ready for writing to device": "检测不到设备，请重连设备服务串口。",
     "text: failed writing to device": "写入设备失败。",
+    " can not be written, please update the firmware.": "不能被写入，请升级设备固件。",
     "Failed to restore!": "恢复出厂设置失败。",
     "Failed to reset!": "清零失败。",
     "text: restore factory notice": "此操作将恢复所有设置到出厂默认值，确定继续？",
@@ -429,15 +443,16 @@
                     <div class="text-subheader">
                       {{$t('Misc. (G9)')}}
                     </div>
-                    <!-- <el-form-item :label="$t('Output List')">
-                      <el-select v-model="configMap.xxx">
+                    <el-form-item :label="$t('Output List')" prop="G9"
+                      :rules="[rules.required]">
+                      <el-select v-model="configMap.G9" multiple>
                         <el-option v-for="item in optionsG9"
                           :key="item.value"
                           :value="item.value"
                           :label='item.label'></el-option>
                       </el-select>
                       <div class="text-note">{{$t('G9.ol')}}</div>
-                    </el-form-item> -->
+                    </el-form-item>
                     <!-- <el-form-item :label="$t('Update Interval of Heater Temperature')" v-if="showG9Ht" prop="IH"
                       :rules="[rules.required, rules.rng15_3600]">
                       <el-input v-model="configMap.IH" type="number">
@@ -448,6 +463,22 @@
                     <el-form-item :label="$t('Heating Control')" v-if="showG9Ht"
                       :rules="[rules.required]">
                       <el-switch v-model="configMap.HC" active-value="Y" inactive-value="N"></el-switch>
+                    </el-form-item>
+                    <el-form-item :label="$t('Tilt Detection')" v-if="showG9Tilt"
+                      :rules="[rules.required]">
+                      <el-switch v-model="configMap.TD" active-value="Y" inactive-value="N"></el-switch>
+                    </el-form-item>
+                    <el-form-item :label="$t('Auto North')" v-if="showG9Tilt"
+                      :rules="[rules.required]">
+                      <el-switch v-model="configMap.CC" active-value="Y" inactive-value="N" :disabled="dialog"></el-switch>
+                      <div class="text-note">{{$t('G9.cc')}}</div>
+                    </el-form-item>
+                    <el-form-item :label="$t('Compass Calibration')">
+                      <el-button size="mini"
+                        @click="compassCalib()"
+                        :loading="btnCompassCalibLoading"
+                        :disabled="btnCompassCalibLoading">{{$t('Calibrate')}}</el-button>
+                      <div class="text-note">{{$t('G9.calib')}}</div>
                     </el-form-item>
                   </div>
 
@@ -524,6 +555,22 @@
           <el-button type="primary" @click="closeWindowFn">{{$t('Close')}}</el-button>
         </div>
       </el-footer>
+
+      <el-dialog
+        :title="$t('Compass Calibration')"
+        :visible.sync="dialog"
+        width="30%"
+        :show-close="calibCountdown<=0" :close-on-click-modal="false" :close-on-press-escape="false">
+        <el-row type="flex" justify="center">
+          <el-col :span="12">
+            <img src="../assets/sensecap-one-calibrate.png" style="width: 100%;">
+          </el-col>
+        </el-row>
+        <div class="text-note">{{$t('G9.calibDialog')}}</div>
+        <span slot="footer" class="dialog-footer">
+          <el-button type="primary" @click="dialogBtnClicked()" :loading="calibCountdown>0">{{dialogBtnText}}</el-button>
+        </span>
+      </el-dialog>
     </el-container>
   </el-container>
 </template>
@@ -590,6 +637,7 @@ import { slaveGroupDefines,
   units
 } from '@/global-defines'
 import { compare2Objects } from '@/utils'
+import compareVersions from 'compare-versions'
 
 const delayMs = ms => new Promise(res => setTimeout(res, ms))
 
@@ -613,7 +661,18 @@ export default {
 
     this.commonRegs = ['CP', /*'AD',*/ 'BD', 'MBAD', 'MBBD', 'SDIAD', 'NA']
     this.slaveRegs = {
-      "1": ['G0', 'G1', 'IB', 'UT', 'UP', 'G2', 'IW', 'AW', 'DO', 'G3', 'IR', 'CR', 'AL', 'DL', 'UR', 'IH', 'HC'],
+      "1": [
+        'G0',
+        'G1', 'IB', 'UT', 'UP',
+        'G2', 'IW', 'AW', 'DO',
+        'G3', 'IR', 'CR', 'AL', 'DL', 'UR',
+      ],
+    }
+    this.G9Regs = {
+      //"G9" = ORed these regs
+      "HC": { name: "Heating Control", i2cAddr: ["1"], drvVer: ["2.9"], commVer: ["2.8"] },
+      "TD": { name: "Tilt Detection", i2cAddr: ["1"], drvVer: ["2.8"], commVer: ["2.8"] },
+      "CC": { name: "Tilt Detection", i2cAddr: ["1"], drvVer: ["2.8"], commVer: ["2.8"] },
     }
 
     return {
@@ -626,6 +685,7 @@ export default {
       btnRestoreLoading: false,
       btnResetRainDurationLoading: false,
       btnResetRainAccLoading: false,
+      btnCompassCalibLoading: false,
 
       //////////////////////////////////////////
       //global Vars
@@ -653,6 +713,7 @@ export default {
       showS1G3: false,
       showG9: false,
       showG9Ht: false,
+      showG9Tilt: false,
       unitOptions: {},
 
       optionsMainPortProto: [
@@ -725,12 +786,20 @@ export default {
         DL: 2000000,
         UR: 'M',
 
-        // G9: [],
-        IH: 15,
+        G9: [],
+        // IH: 15,
         HC: 'N',
+        TD: 'N',
+        CC: 'N'
       },
 
       configMapInDevice: {},
+
+      //compass calibration
+      dialog: false,
+      dialogTitle: "",
+      dialogBtnText: "",
+      calibCountdown: 0,
     }
   },
   computed: {
@@ -830,6 +899,7 @@ export default {
         for (const i2cAddr of miscGroup.meas[measName].i2cAddr) {
           if (i2cAddr in this.i2cAddrInCurrentCfg) {
             show = true
+            break
           }
         }
         if (show) {
@@ -848,7 +918,8 @@ export default {
       }
       this.unitOptions = unitOptions1
       this.showG0 = this.optionsG0.length > 0
-      this.showS1G1 = this.showS1G2 = this.showS1G3 = /*this.showG9 = this.showG9Ht =*/ '1' in this.i2cAddrInCurrentCfg
+      this.showS1G1 = this.showS1G2 = this.showS1G3 = '1' in this.i2cAddrInCurrentCfg
+      this.showG9 = this.showG9Ht || this.showG9Tilt
       this.guiRendered = true
     },
 
@@ -860,6 +931,34 @@ export default {
           regList = [...regList, ...this.slaveRegs[i2cAddr]]
         }
       }
+
+      //G9
+      if (!('SW' in this.i2cAddrFromDevice)) this.i2cAddrFromDevice['SW'] = "0.1"
+      console.log('before readFromDeviceAsync, the SW=', this.i2cAddrFromDevice['SW'])
+
+      this.showG9Ht = this.showG9Tilt = false
+      let hasG9 = false
+      for (const regName in this.G9Regs) {
+        let show = false
+        let i = 0
+        for (const i2cAddr of this.G9Regs[regName].i2cAddr) {
+          if (i2cAddr in this.i2cAddrFromDevice
+            && compareVersions.compare(this.i2cAddrFromDevice['SW'], this.G9Regs[regName].commVer[i], '>=')
+            && compareVersions.compare(this.i2cAddrFromDevice[i2cAddr], this.G9Regs[regName].drvVer[i], '>=')) {
+            show = true
+            break
+          }
+          i++
+        }
+        if (show) {
+          if (regName === 'HC') this.showG9Ht = true
+          if (regName === 'TD') this.showG9Tilt = true
+          regList.push(regName)
+          hasG9 = true
+        }
+      }
+      if (hasG9) regList.push('G9')
+
       console.log('all reg to be read:', regList)
 
       //read AD first
@@ -891,23 +990,49 @@ export default {
     },
 
     readFromDevice() {
-      if (Object.keys(this.i2cAddrFromDevice).length === 0) {
-        this.$message.error(this.$t('text: not ready for reading from device'))
-        console.log('i2c list empty, should reconnect the device')
-        return false
-      }
-
       this.btnReadFromDeviceLoading = true
-      this.readFromDeviceAsync().then(() => {
+      ipcRenderer.invoke('i2c-list-versions-req', 1).then((result) => {
+        let i2cAddr2 = {}
+        if (typeof result === 'object') i2cAddr2 = JSON.parse(JSON.stringify(result))
+        if ('SW' in i2cAddr2) delete i2cAddr2['SW']
+        if (Object.keys(i2cAddr2).length === 0) {
+          throw new Error('i2cAddrFromDevice empty')
+        } else {
+          this.i2cAddrFromDevice = result
+          return this.readFromDeviceAsync()
+        }
+      }).then(() => {
         console.log('readFromDeviceAsync done.')
         this.i2cAddrInCurrentCfg = this.i2cAddrFromDevice
         setImmediate(this.renderGUI)
       }).catch(error => {
         console.log('readFromDeviceAsync error:', error)
-        this.$message.error(this.$t('text: failed reading from device'))
+        let errorMsg = error.message
+        if (errorMsg.includes("i2cAddrFromDevice empty")) {
+          this.$message.error(this.$t('text: not ready for reading from device'))
+          console.log('i2c list empty, should reconnect the device')
+        } else {
+          this.$message.error(this.$t('text: failed reading from device'))
+        }
       }).finally(() => {
         this.btnReadFromDeviceLoading = false
       })
+    },
+
+    canWrite(regName) {
+      const reg = this.G9Regs[regName]
+      let pass = false
+      let i = 0
+      for (const i2cAddr of reg.i2cAddr) {
+        if (i2cAddr in this.i2cAddrFromDevice
+          && compareVersions.compare(this.i2cAddrFromDevice['SW'], reg.commVer[i], '>=')
+          && compareVersions.compare(this.i2cAddrFromDevice[i2cAddr], reg.drvVer[i], '>=')) {
+          pass = true
+          break
+        }
+        i++
+      }
+      return pass
     },
 
     async writeToDeviceAsync() {
@@ -917,6 +1042,41 @@ export default {
           regList = [...regList, ...this.slaveRegs[i2cAddr]]
         }
       }
+      //G9
+      if (!('SW' in this.i2cAddrFromDevice)) this.i2cAddrFromDevice['SW'] = "0.1"
+      console.log('before writeToDeviceAsync, the SW=', this.i2cAddrFromDevice['SW'])
+
+      let notCompatible = false
+      if (this.showG9Ht) {
+        if (!this.canWrite('HC')) {
+          this.$notify({
+            type: 'warn',
+            message: this.$t(this.G9Regs['HC'].name) + this.$t(' can not be written, please update the firmware.'),
+            duration: 2000,
+          })
+          notCompatible = true
+        } else regList.push('HC')
+      }
+      if (this.showG9Tilt) {
+        if (!this.canWrite('TD')) {
+          this.$notify({
+            type: 'warn',
+            message: this.$t(this.G9Regs['TD'].name) + this.$t(' can not be written, please update the firmware.'),
+            duration: 2000,
+          })
+          notCompatible = true
+        } else regList.push('TD')
+        if (!this.canWrite('CC')) {
+          this.$notify({
+            type: 'warn',
+            message: this.$t(this.G9Regs['CC'].name) + this.$t(' can not be written, please update the firmware.'),
+            duration: 2000,
+          })
+          notCompatible = true
+        } else regList.push('CC')
+      }
+      if (!notCompatible) regList.push('G9')
+
       let regListChanged = []
       let unitRegChanged = false
       for (const reg of regList) {
@@ -941,6 +1101,7 @@ export default {
         } else {
           v = this.configMap[regName]
         }
+        console.log('to be written:', `${regName}=${v}`)
         let result = await ipcRenderer.invoke('ap-req-with-retry', `${regName}=${v}`, `${regName}=`, 1000)
         console.log('apRequest write result:', result)
         if (regName in this.configMapInDevice) {
@@ -975,21 +1136,33 @@ export default {
       this.$refs['form1'].validate((valid) => formValid = valid)
       if (!formValid) return false
 
-      if (Object.keys(this.i2cAddrFromDevice).length === 0) {
-        this.$message.error(this.$t('text: not ready for writing to device'))
-        return false
-      }
-      if (!compare2Objects(this.i2cAddrInCurrentCfg, this.i2cAddrFromDevice)) {
-        this.$message.error(this.$t('text: config hw type not match'))
-        return false
-      }
-
       this.btnWriteToDeviceLoading = true
-      this.writeToDeviceAsync().then(() => {
+      ipcRenderer.invoke('i2c-list-versions-req', 1).then((result) => {
+        let i2cAddr2 = {}
+        if (typeof result === 'object') i2cAddr2 = JSON.parse(JSON.stringify(result))
+        if ('SW' in i2cAddr2) delete i2cAddr2['SW']
+        if (Object.keys(i2cAddr2).length === 0) {
+          throw new Error('i2cAddrFromDevice empty')
+        } else {
+          if (!compare2Objects(Object.keys(this.i2cAddrInCurrentCfg).sort(), Object.keys(result).sort())) {
+            throw new Error('hw type not match')
+          }
+          this.i2cAddrFromDevice = result
+          return this.writeToDeviceAsync()
+        }
+      }).then(() => {
         console.log('writeToDeviceAsync done.')
       }).catch(error => {
         console.log('writeToDeviceAsync error:', error)
-        this.$message.error(this.$t('text: failed writing to device'))
+        let errorMsg = error.message
+        if (errorMsg.includes("i2cAddrFromDevice empty")) {
+          this.$message.error(this.$t('text: not ready for writing to device'))
+          console.log('i2c list empty, should reconnect the device')
+        } else if (errorMsg.includes("hw type not match")) {
+          this.$message.error(this.$t('text: config hw type not match'))
+        } else {
+          this.$message.error(this.$t('text: failed writing to device'))
+        }
       }).finally(() => {
         this.btnWriteToDeviceLoading = false
       })
@@ -1074,10 +1247,16 @@ export default {
       //build the JSON content
       const d = new Date()
       const dateStr = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`
+      let configMap = JSON.parse(JSON.stringify(this.configMap))
+      if (!this.showG9Ht) delete configMap['HC']
+      if (!this.showG9Tilt) {
+        delete configMap['TD']
+        delete configMap['CC']
+      }
       let configProfileJson = {
         profileVersion: "1.0",
         i2cAddrs: this.i2cAddrInCurrentCfg,
-        configMap: this.configMap,
+        configMap: configMap,
         dateTime: dateStr
       }
       ipcRenderer.invoke('save-to-file', configProfileJson).then((result) => {
@@ -1102,7 +1281,9 @@ export default {
         if ('profileVersion' in cfgJson && 'i2cAddrs' in cfgJson && 'configMap' in cfgJson) {
           if (cfgJson['profileVersion'] === "1.0") {
             this.i2cAddrInCurrentCfg = cfgJson['i2cAddrs']
-            this.configMap = cfgJson['configMap']
+            Object.assign(this.configMap, cfgJson['configMap'])
+            this.showG9Ht = 'HC' in cfgJson['configMap']
+            this.showG9Tilt = 'TD' in cfgJson['configMap']
             setImmediate(this.renderGUI)
 
             console.log('loaded from file succ, the profileVersion: 1.0')
@@ -1123,6 +1304,41 @@ export default {
       }).catch((error) => {
         console.log('load from file error:', error)
         this.$message.error(this.$t('Failed in loading from file, invalid profile file.'))
+      })
+    },
+    compassCalib() {
+      if (this.calibCountdown > 0) {
+        return false
+      } else {
+        this.dialogBtnText = this.$t('Start')
+        this.dialog = true
+      }
+    },
+    calibTick() {
+      let self = this
+      setTimeout(() => {
+        self.calibCountdown--
+        self.dialogBtnText = self.calibCountdown + " " + self.$t('seconds')
+        if (self.calibCountdown > 0) {
+          ipcRenderer.send('ap-req', 'CC=?', 'CC=', 1000)
+          self.calibTick()
+        }
+        else {
+          self.dialog = false
+        }
+      }, 1100)
+    },
+    dialogBtnClicked() {
+      let cmd = 'CC=C'
+      ipcRenderer.invoke('ap-req-with-retry', cmd, cmd, 3000).then((result) => {
+        console.log(`start compass calibration succ:`, result)
+        if (result) {
+          this.calibCountdown = 30
+          this.dialogBtnText = this.calibCountdown + " " + this.$t('seconds')
+          this.calibTick()
+        }
+      }).catch((error) => {
+        this.$message.error(this.$t('Failed to start the calibration!'))
       })
     }
   },
@@ -1171,6 +1387,13 @@ export default {
       console.log('update-available:', arg)
       this.newVersion = arg
       document.getElementById('versionText').style.cursor = 'pointer'
+    })
+
+    ipcRenderer.on('ap-resp', (event, arg) => {
+      console.log('ap-resp:', arg)
+      // if ('CC' in arg && arg['CC'] !== 'C') {
+      //   this.calibCountdown = 0
+      // }
     })
 
   },

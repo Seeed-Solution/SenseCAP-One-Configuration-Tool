@@ -157,6 +157,7 @@ import { slaveGroupDefines,
   changableUnitsMeasMap,
   displayStrForUnit
 } from '@/global-defines'
+import compareVersions from 'compare-versions'
 
 const delayMs = ms => new Promise(res => setTimeout(res, ms))
 
@@ -347,11 +348,16 @@ export default {
       let miscGroup = JSON.parse(JSON.stringify(miscGroupDefine))
       for (const measName in miscGroup.meas) {
         let show = false
+        let i = 0
         for (const i2cAddr of miscGroup.meas[measName].i2cAddr) {
-          if (i2cAddr in this.detectedI2cAddrs) {
+          if (i2cAddr in this.detectedI2cAddrs
+              && compareVersions.compare(this.swVersion, miscGroup.meas[measName].commVer[i], '>=')
+              && compareVersions.compare(this.detectedI2cAddrs[i2cAddr], miscGroup.meas[measName].drvVer[i], '>=')) {
             miscGroupAvailable = true
             show = true
+            break
           }
+          i++
         }
         if (show) {
           this.units[measName] = miscGroup.meas[measName]["unit"]
@@ -499,7 +505,6 @@ export default {
       console.log(arg)
       this.detectedI2cAddrs = JSON.parse(JSON.stringify(arg))
       console.log('i2c-list-got:', this.detectedI2cAddrs)
-      setImmediate(this.displaySlaveGroups)
     })
 
     //dev info got
@@ -525,6 +530,9 @@ export default {
         clearTimeout(this.hTimeoutQueryUnits)
       }
       this.hTimeoutQueryUnits = setTimeout(this.queryUnits, 1000)
+
+      //display slave groups
+      setImmediate(this.displaySlaveGroups)
     })
     ipcRenderer.on('dev-info-resp-error', (event, arg) => {
       this.$message.error(this.$t('text: dev-info-error'))
