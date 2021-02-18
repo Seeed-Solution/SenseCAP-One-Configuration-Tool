@@ -664,7 +664,7 @@ export default {
       "1": [
         'G0',
         'G1', 'IB', 'UT', 'UP',
-        'G2', 'IW', 'AW', 'DO',
+        'G2', 'IW', 'AW', 'DO', 'US',
         'G3', 'IR', 'CR', 'AL', 'DL', 'UR',
       ],
     }
