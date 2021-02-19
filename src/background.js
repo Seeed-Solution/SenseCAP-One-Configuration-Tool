@@ -581,7 +581,7 @@ ee.on('ap-addr-got', () => {
   }
   if (apCmdProcessing) {
     //this is for AP cmd error resp
-    ee.emit('error', new Error('apDevRequest cmd format error'))
+    ee.emit('error', new Error('apDevRequest cmd format error or param invalid'))
     return
   }
   broadcastMultiWindows('ap-addr-got', apAddr, win, winSettings, winFwUpdate)

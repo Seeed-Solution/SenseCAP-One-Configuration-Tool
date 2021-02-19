@@ -5,6 +5,7 @@
     "note10-1": "changable for Service Port only.",
     "note11": "Valid range 0-9, A-Z, a-z.",
     "note12": "Apply for both Service Port and Main Port.",
+    "note13": "Valid range [1, 247].",
     "note15": "Valid range 0-9, A-Z, a-z.",
     "note16": "Max. length 64.",
     "note20": "The output list for G0 poll.",
@@ -55,6 +56,7 @@
     "note11": "有效值 0-9, A-Z, a-z。",
     "ASCII Protocol Baud Rate": "ASCII协议波特率",
     "note12": "对服务串口和主通信串口均有效。",
+    "note13": "有效范围 [1, 247]。",
     "Modbus Address": "Modbus地址",
     "Modbus Baud Rate": "Modbus波特率",
     "SDI-12 Address": "SDI-12地址",
@@ -223,6 +225,7 @@
                       :rules="[rules.required, rules.mbAddr]">
                       <el-input v-model.number="configMap.MBAD" type="number">
                       </el-input>
+                      <div class="text-note">{{$t('note13')}}</div>
                     </el-form-item>
                     <el-form-item :label="$t('Modbus Baud Rate')" prop="MBBD"
                       :rules="[rules.required]">
@@ -647,7 +650,7 @@ export default {
     let rules = {
       required: {required: true, message: this.$t("Required."), trigger: 'blur'},
       charAddr: {type: 'string', required: true, pattern: /[0-9a-zA-Z]{1}/, message: this.$t("Invalid Address."), trigger: 'blur'},
-      mbAddr: {type: 'number', min: 0, max: 255, message: this.$t("Invalid Modbus Address."), trigger: 'blur'},
+      mbAddr: {type: 'number', min: 1, max: 247, message: this.$t("Invalid Modbus Address."), trigger: 'blur'},
       deviceName: {type: 'string', min: 1, max: 64, message: this.$t("Invalid Device Name."), trigger: 'blur'},
       rng10_100: {type: 'number', min: 10, max: 100, message: this.$t("Invalid Number."), trigger: 'blur'},
       rng1_3600: {type: 'number', min: 1, max: 3600, message: this.$t("Invalid Number."), trigger: 'blur'},
