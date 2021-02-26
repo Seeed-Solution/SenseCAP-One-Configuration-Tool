@@ -649,7 +649,7 @@ export default {
   data() {
     let rules = {
       required: {required: true, message: this.$t("Required."), trigger: 'blur'},
-      charAddr: {type: 'string', required: true, pattern: /[0-9a-zA-Z]{1}/, message: this.$t("Invalid Address."), trigger: 'blur'},
+      charAddr: {type: 'string', required: true, pattern: /^[0-9a-zA-Z]{1}$/, message: this.$t("Invalid Address."), trigger: 'blur'},
       mbAddr: {type: 'number', min: 1, max: 247, message: this.$t("Invalid Modbus Address."), trigger: 'blur'},
       deviceName: {type: 'string', min: 1, max: 64, message: this.$t("Invalid Device Name."), trigger: 'blur'},
       rng10_100: {type: 'number', min: 10, max: 100, message: this.$t("Invalid Number."), trigger: 'blur'},
