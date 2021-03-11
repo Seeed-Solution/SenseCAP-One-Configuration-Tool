@@ -542,7 +542,7 @@ function parseLine(line) {
     ee2.emit('error', new Error('bootloader not supported'))  //old bootloader
     return
   }
-  found = line.match(/Connected Slave Devices:\s+(.+)$/i)
+  found = line.match(/Connected Slave Devices:\s?(.*)$/i)
   if (found) {
     logger.debug('found connected slaves in bootloader:', found[1])
     ee2.emit('detected-slaves-in-bootloader', found[1])
@@ -880,7 +880,8 @@ ipcMain.handle('enter-bootloader', async (event, i2cAddr) => {
   }, 30000)
   updating = 1
   try {
-    const [slaveDevicesStr] = await once(ee2, 'detected-slaves-in-bootloader')
+    let [slaveDevicesStr] = await once(ee2, 'detected-slaves-in-bootloader')
+    if (!slaveDevicesStr) slaveDevicesStr = '[]'
     clearInterval(hi)
     clearTimeout(ht)
     const slaveDevicesJson = JSON.parse(slaveDevicesStr)
