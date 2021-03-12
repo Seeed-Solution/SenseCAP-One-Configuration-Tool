@@ -466,6 +466,29 @@ async function serialCloseAsync() {
   })
 }
 
+async function serialWriteAsync(data, timeout=250) {
+  return new Promise((resolve, reject) => {
+    const h = setTimeout(() => {
+      reject(new Error('serialWriteAsync timeout'))
+    }, timeout)
+    if (serial && serial.isOpen) {
+      serial.write(data, (error) => {
+        if (error) {
+          clearTimeout(h)
+          reject(error)
+        }
+        serial.drain((error2) => {
+          clearTimeout(h)
+          if (error2) reject(error2)
+          resolve()
+        })
+      })
+    } else {
+      reject(new Error('serial is not open'))
+    }
+  })
+}
+
 ipcMain.on('serial-open-req', (event, selPort, baud) => {
   logger.info(`serial-open-req, ${selPort}, ${baud} ...`)
 
@@ -593,7 +616,7 @@ ee.on('ap-addr-got', () => {
  * @param {string} succNeedle '*' stands for any response
  * @param {number} timeoutMs
  */
-async function apDevRequest(strCmd, succNeedle = '*', timeoutMs = 3000) {
+async function apDevRequest(strCmd, succNeedle = '*', timeoutMs = 1000) {
   if (!apAddr) throw new Error('apAddr empty')
   let strCmdFinal = `${apAddr}XA;${strCmd}\r\n`
   if (serial && serial.isOpen) {
@@ -603,7 +626,8 @@ async function apDevRequest(strCmd, succNeedle = '*', timeoutMs = 3000) {
     }
 
     logger.debug(`send ASCII cmd: ${strCmdFinal}`)
-    serial.write(strCmdFinal)
+    // serial.write(strCmdFinal)
+    await serialWriteAsync(strCmdFinal)
 
     let h = setTimeout(() => {
       ee.emit('error', new Error('apDevRequest timeout'))
@@ -717,9 +741,9 @@ ipcMain.handle('ap-req-with-retry', async (event, strCmd, ...args) => {
 ipcMain.on('dev-info-req', async (event) => {
   logger.info('dev-info-req ...')
   try {
-    let snObj = await apRequestAsync('S/N=?', 'S/N=', 1000)
+    let snObj = await apRequestAsync('S/N=?', 'S/N=', 500)
 
-    let versionsObj = await apRequestAsync('VE=?', 'VE=', 2000)
+    let versionsObj = await apRequestAsync('VE=?', 'VE=', 500)
     let versionsArray = versionsObj['VE']
     logger.debug(versionsArray)
     let versionsMap = {}
@@ -736,11 +760,11 @@ ipcMain.on('dev-info-req', async (event) => {
     broadcastMultiWindows('i2c-list-got', slaveVersionMap, win, winSettings, winFwUpdate)
     await delayMs(100)
 
-    let dateOfManuObj = await apRequestAsync('MD=?', 'MD=', 1000)
+    let dateOfManuObj = await apRequestAsync('MD=?', 'MD=', 400)
     let mdStr = dateOfManuObj['MD']
     let dateOfManuFriendlyStr = mdStr.slice(0, 4) + '-' + mdStr.slice(4, 6) + '-' + mdStr.slice(-2)
 
-    let nameObj = await apRequestAsync('NA=?', 'NA=', 1000)
+    let nameObj = await apRequestAsync('NA=?', 'NA=', 400)
 
     // {'S/N': 'XXX', 'HW': 'XXX', 'SW': 'XXX', 'S1': 'YYY', 'S2': 'ZZZ', 'MD': 'DDD', 'NA': 'NNN'}
     let deviceInfoObj = {...snObj, ...versionsMap, 'MD': dateOfManuFriendlyStr, ...nameObj}

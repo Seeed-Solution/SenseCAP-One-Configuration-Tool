@@ -320,7 +320,7 @@ export default {
     reqDeviceInfo() {
       this.eui = this.hwVersion = this.swVersion = this.dateOfManu = this.devName = '##'
       ipcRenderer.send('dev-info-req')
-      this.hIntervalCheckDevInfo = setInterval(this.checkDeviceInfo, 1000)
+      this.hIntervalCheckDevInfo = setInterval(this.checkDeviceInfo, 2000)
     },
 
     displaySlaveGroups() {
