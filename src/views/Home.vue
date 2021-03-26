@@ -490,6 +490,15 @@ export default {
         console.error('serial close failed:', reason)
       }
     })
+    ipcRenderer.on('flash-finished', (event) => {
+      console.log('recv flash-finished event, disconnect and connect...')
+      if (this.serialOpened) {
+        ipcRenderer.send('serial-close-req')
+        setTimeout(() => {
+          ipcRenderer.send('serial-open-req', this.selectedSerialPort, this.baudRate)
+        }, 1000)
+      }
+    })
 
     //ap-addr-got
     ipcRenderer.on('ap-addr-got', (event, arg) => {
