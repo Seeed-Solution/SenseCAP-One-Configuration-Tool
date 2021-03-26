@@ -18,7 +18,9 @@ exports.grpNameTransZh = {
   "Rain Peak Intensity": "降雨强度峰值",
   "Misc.": "其他",
   "Heating Temperature": "加热区域温度",
-  "Tilt Status": "倾倒状态"
+  "Tilt Status": "倾倒状态",
+  "Particulate Matter": "颗粒物",
+  "GlobalDefinesEnd": "-"
 }
 
 exports.changableUnitsMeasMap = {
@@ -89,8 +91,19 @@ exports.slaveGroupDefines = {
       }
     }
   ],
-  "2": [],
+  "2": [
+    {
+      grpNameShort: "G4",
+      grpName: "Particulate Matter",
+      meas: {
+        "PM2.5": { name: "PM2.5", unit: 'ug/m³', unitSuffix: '' },
+        "PM10": { name: "PM10", unit: 'ug/m³', unitSuffix: '' },
+      }
+    }
+  ],
   "3": [],
+  "41": [],
+  "42": [],
 }
 
 

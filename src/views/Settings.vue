@@ -23,6 +23,10 @@
       "AL": "Valid range [10, 80000], current unit.",
       "DL": "Valid range [100, 2000000]."
     },
+    "G4": {
+      "ol": "The output list for G4 poll, this also affects the data updating for main page.",
+      "IDUST": "Valid range [1, 3600]."
+    },
     "G9": {
       "ol": "The output list for G9 poll, this also affects the data updating for main page.",
       "uih": "Valid range [15, 3600], if heating is enabled, this interval is set to 15 seconds implicitly.",
@@ -91,6 +95,11 @@
       "IR": "有效范围 [10, 3600]。",
       "AL": "有效范围 [10, 80000], 当前单位。",
       "DL": "有效范围 [100, 2000000]."
+    },
+    "Particulate Matter (G4)": "颗粒物 (G4)",
+    "G4": {
+      "ol": "G4数据组的输出列表（同时影响主页面的数据更新）。",
+      "IDUST": "有效范围 [1, 3600]。"
     },
     "Counter Reset Mode": "计数清零模式",
     "Rain Accumulation Limit": "累计降雨量极限值",
@@ -441,6 +450,30 @@
                     </el-form-item>
                   </div>
 
+                  <div v-if="showS2G4">
+                    <el-divider></el-divider>
+                    <div class="text-subheader">
+                      {{$t('Particulate Matter (G4)')}}
+                    </div>
+                    <el-form-item :label="$t('Output List')" prop="G4"
+                      :rules="[rules.required]">
+                      <el-select v-model="configMap.G4" multiple>
+                        <el-option v-for="item in optionsS2G4"
+                          :key="item.value"
+                          :value="item.value"
+                          :label='item.label'></el-option>
+                      </el-select>
+                      <div class="text-note">{{$t('G4.ol')}}</div>
+                    </el-form-item>
+                    <el-form-item :label="$t('Update Interval')" prop="IDUST"
+                      :rules="[rules.required, rules.rng1_3600]">
+                      <el-input v-model.number="configMap.IDUST" type="number">
+                        <template slot="append">{{$t('seconds')}}</template>
+                      </el-input>
+                      <div class="text-note">{{$t('G4.IDUST')}}</div>
+                    </el-form-item>
+                  </div>
+
                   <div v-if="showG9">
                     <el-divider></el-divider>
                     <div class="text-subheader">
@@ -670,6 +703,9 @@ export default {
         'G2', 'IW', 'AW', 'DO', 'US',
         'G3', 'IR', 'CR', 'AL', 'DL', 'UR',
       ],
+      "2": [
+        'G4', 'IDUST'
+      ]
     }
     this.G9Regs = {
       //"G9" = ORed these regs
@@ -714,6 +750,7 @@ export default {
       showS1G1: false,
       showS1G2: false,
       showS1G3: false,
+      showS2G4: false,
       showG9: false,
       showG9Ht: false,
       showG9Tilt: false,
@@ -756,6 +793,7 @@ export default {
         {value: 4, label: "4Hz"},
       ],
       optionsS1G3: [],
+      optionsS2G4: [],
       optionsG9: [],
 
       configMap: {
@@ -788,6 +826,9 @@ export default {
         AL: 80000,
         DL: 2000000,
         UR: 'M',
+
+        G4: [],
+        IDUST: 1,
 
         G9: [],
         // IH: 15,
@@ -870,6 +911,7 @@ export default {
       this.optionsS1G1 = []
       this.optionsS1G2 = []
       this.optionsS1G3 = []
+      this.optionsS2G4 = []
       this.optionsG9 = []
       // this.configMap.G0 = []
       // this.configMap.G1 = []
@@ -891,6 +933,8 @@ export default {
               } else if (i2cAddr === '1' && grp.grpNameShort === 'G3') {
                 this.optionsS1G3.push(optionItem)
                 // this.configMap.G3.push(measName)
+              } else if (i2cAddr === '2' && grp.grpNameShort === 'G4') {
+                this.optionsS2G4.push(optionItem)
               }
             }
           }
@@ -922,6 +966,7 @@ export default {
       this.unitOptions = unitOptions1
       this.showG0 = this.optionsG0.length > 0
       this.showS1G1 = this.showS1G2 = this.showS1G3 = '1' in this.i2cAddrInCurrentCfg
+      this.showS2G4 = '2' in this.i2cAddrInCurrentCfg
       this.showG9 = this.showG9Ht || this.showG9Tilt
       this.guiRendered = true
     },
