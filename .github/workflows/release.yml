@@ -35,7 +35,7 @@ jobs:
           $NodeDirPath = Split-Path $WhereNode -Parent
           $NodeModulesPath = $NodeDirPath + "\node_modules\npm\node_modules\npm-lifecycle"
           cd $NodeModulesPath
-          npm install node-gyp@8.x
+          yarn add node-gyp@8.x
 
 #      - name: Install Snapcraft
 #        uses: samuelmeuli/action-snapcraft@v1
