@@ -29,6 +29,7 @@ jobs:
           node-version: 12
 
       - name: Update node-gyp
+        if: startsWith(matrix.os, 'windows')
         run: |
           $WhereNode = Get-Command node | Select-Object -ExpandProperty Definition
           $NodeDirPath = Split-Path $WhereNode -Parent
