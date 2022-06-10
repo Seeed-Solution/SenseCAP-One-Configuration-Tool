@@ -20,7 +20,8 @@ exports.grpNameTransZh = {
   "Heating Temperature": "加热区域温度",
   "Tilt Status": "倾倒状态",
   "Particulate Matter": "颗粒物",
-  "GlobalDefinesEnd": "-"
+  "GlobalDefinesEnd": "-",
+  "Carbon Dioxide":"二氧化碳"
 }
 
 exports.changableUnitsMeasMap = {
@@ -102,6 +103,15 @@ exports.slaveGroupDefines = {
     }
   ],
   "3": [],
+  "17":[
+    {
+      grpNameShort: "G5",
+      grpName: "Carbon Dioxide",
+      meas: {
+        "CO2": { name: "CO2", unit: 'ppm', unitSuffix: '' }
+      }
+    }
+  ],
   "41": [],
   "42": [],
 }

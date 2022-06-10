@@ -27,6 +27,10 @@
       "ol": "The output list for G4 poll, this also affects the data updating for main page.",
       "IDUST": "Valid range [1, 3600]."
     },
+    "G5": {
+      "ol": "The output list for G5 poll, this also affects the data updating for main page.",
+      "ICO2": "Valid range [1, 3600]."
+    },
     "G9": {
       "ol": "The output list for G9 poll, this also affects the data updating for main page.",
       "uih": "Valid range [15, 3600], if heating is enabled, this interval is set to 15 seconds implicitly.",
@@ -101,6 +105,11 @@
       "ol": "G4数据组的输出列表（同时影响主页面的数据更新）。",
       "IDUST": "有效范围 [1, 3600]。"
     },
+    "Carbon Dioxide (G5)": "二氧化碳 (G5)",
+    "G5": {
+      "ol": "G5数据组的输出列表（同时影响主页面的数据更新）。",
+      "ICO2": "有效范围 [1, 3600]。"
+    },     
     "Counter Reset Mode": "计数清零模式",
     "Rain Accumulation Limit": "累计降雨量极限值",
     "Rain Duration Limit": "累计降雨时间极限值",
@@ -474,6 +483,31 @@
                     </el-form-item>
                   </div>
 
+
+                  <div v-if="showS2G5">
+                    <el-divider></el-divider>
+                    <div class="text-subheader">
+                      {{$t('Carbon Dioxide (G5)')}}
+                    </div>
+                    <el-form-item :label="$t('Output List')" prop="G5"
+                      :rules="[rules.required]">
+                      <el-select v-model="configMap.G5" multiple>
+                        <el-option v-for="item in optionsS2G5"
+                          :key="item.value"
+                          :value="item.value"
+                          :label='item.label'></el-option>
+                      </el-select>
+                      <div class="text-note">{{$t('G5.ol')}}</div>
+                    </el-form-item>
+                    <el-form-item :label="$t('Update Interval')" prop="ICO2"
+                      :rules="[rules.required, rules.rng5_3600]">
+                      <el-input v-model.number="configMap.ICO2" type="number">
+                        <template slot="append">{{$t('seconds')}}</template>
+                      </el-input>
+                      <div class="text-note">{{$t('G5.ICO2')}}</div>
+                    </el-form-item>
+                  </div>
+
                   <div v-if="showG9">
                     <el-divider></el-divider>
                     <div class="text-subheader">
@@ -658,8 +692,6 @@
 .el-menu-item.is-active svg {
   color: #205C71 !important;
 }
-
-
 </style>
 
 <script>
@@ -674,9 +706,7 @@ import { slaveGroupDefines,
 } from '@/global-defines'
 import { compare2Objects } from '@/utils'
 import compareVersions from 'compare-versions'
-
 const delayMs = ms => new Promise(res => setTimeout(res, ms))
-
 export default {
   name: 'Home',
   data() {
@@ -687,6 +717,7 @@ export default {
       deviceName: {type: 'string', min: 1, max: 64, message: this.$t("Invalid Device Name."), trigger: 'blur'},
       rng10_100: {type: 'number', min: 10, max: 100, message: this.$t("Invalid Number."), trigger: 'blur'},
       rng1_3600: {type: 'number', min: 1, max: 3600, message: this.$t("Invalid Number."), trigger: 'blur'},
+      rng5_3600: {type: 'number', min: 1, max: 3600, message: this.$t("Invalid Number."), trigger: 'blur'},
       rng2_3600: {type: 'number', min: 2, max: 3600, message: this.$t("Invalid Number."), trigger: 'blur'},
       rng15_3600: {type: 'number', min: 15, max: 3600, message: this.$t("Invalid Number."), trigger: 'blur'},
       rng10_3600: {type: 'number', min: 10, max: 3600, message: this.$t("Invalid Number."), trigger: 'blur'},
@@ -694,7 +725,6 @@ export default {
       rng100_200w: {type: 'number', min: 100, max: 2000000, message: this.$t("Invalid Number."), trigger: 'blur'},
       dirOffset: {type: 'number', min: -180, max: 180, message: this.$t("Invalid Number."), trigger: 'blur'},
     }
-
     this.commonRegs = ['CP', /*'AD',*/ 'BD', 'MBAD', 'MBBD', 'SDIAD', 'NA']
     this.slaveRegs = {
       "1": [
@@ -705,7 +735,10 @@ export default {
       ],
       "2": [
         'G4', 'IDUST'
-      ]
+      ],
+      "17": [
+        'G5', 'ICO2'
+      ], 
     }
     this.G9Regs = {
       //"G9" = ORed these regs
@@ -713,11 +746,9 @@ export default {
       "TD": { name: "Tilt Detection", i2cAddr: ["1"], drvVer: ["2.8"], commVer: ["2.8"] },
       "CC": { name: "Tilt Detection", i2cAddr: ["1"], drvVer: ["2.8"], commVer: ["2.8"] },
     }
-
     return {
       //rules
       rules: rules,
-
       //Buttons
       btnReadFromDeviceLoading: false,
       btnWriteToDeviceLoading: false,
@@ -725,14 +756,12 @@ export default {
       btnResetRainDurationLoading: false,
       btnResetRainAccLoading: false,
       btnCompassCalibLoading: false,
-
       //////////////////////////////////////////
       //global Vars
       tabIndex: 1,
       apAddr: '',
       i2cAddrFromDevice: {},
       i2cAddrInCurrentCfg: {},  //cfg on the GUI, it might be loaded from file, or from device
-
       //App Configs
       appConfig: {
         dataPollInterval: 2,
@@ -743,7 +772,6 @@ export default {
       localeBackup: 'en',
       currentVersion: '',
       newVersion: '',
-
       //Device Configs
       guiRendered: false,
       showG0: false,
@@ -751,11 +779,11 @@ export default {
       showS1G2: false,
       showS1G3: false,
       showS2G4: false,
+      showS2G5: false,
       showG9: false,
       showG9Ht: false,
       showG9Tilt: false,
       unitOptions: {},
-
       optionsMainPortProto: [
         {value: 1, label: "SDI-12"},
         {value: 2, label: "RS-232 Modbus RTU"},
@@ -783,9 +811,7 @@ export default {
         {value: 1152, label: "115200"},
       ],
       optionsG0: [],
-
       optionsS1G1: [],
-
       optionsS1G2: [],
       optionsSampleRate: [
         {value: 1, label: "1Hz"},
@@ -794,8 +820,8 @@ export default {
       ],
       optionsS1G3: [],
       optionsS2G4: [],
+      optionsS2G5: [],
       optionsG9: [],
-
       configMap: {
         CP: 3,
         AD: '0',
@@ -804,14 +830,11 @@ export default {
         MBBD: 96,
         SDIAD: '0',
         NA: "SenseCAP ONE ############",
-
         G0: [],
-
         G1: [],
         IB: 1,
         UT: 'C',
         UP: 'P',
-
         G2: [],
         IW: 1,
         AW: 5,
@@ -819,26 +842,23 @@ export default {
         DO: 0,
         CM: 1,
         US: 'M',
-
         G3: [],
         IR: 10,
         CR: 'M',
         AL: 80000,
         DL: 2000000,
         UR: 'M',
-
         G4: [],
         IDUST: 1,
-
+        G5: [],
+        ICO2:1,       
         G9: [],
         // IH: 15,
         HC: 'N',
         TD: 'N',
         CC: 'N'
       },
-
       configMapInDevice: {},
-
       //compass calibration
       dialog: false,
       dialogTitle: "",
@@ -861,31 +881,26 @@ export default {
     newVersionTooltip: function() {
       return 'v' + this.newVersion + ' ' + this.$t('available')
     },
-
   },
   methods: {
     onMenuSelect(key, keyPath) {
       console.log(`selected menu index: ${key}`)
       this.tabIndex = parseInt(key)
     },
-
     closeWindowFn() {
       console.log('going to send IPC close-settings-window')
       ipcRenderer.send('close-settings-window')
     },
-
     //App Configs
     versionClicked() {
       if (this.newVersion) {
         ipcRenderer.send('goto-new-version')
       }
     },
-
     saveAppConfig() {
       let formValid = false
       this.$refs['form2'].validate((valid) => formValid = valid)
       if (!formValid) return false
-
       store.set('dataPollInterval', this.appConfig.dataPollInterval)
       store.set('plotPointNum', this.appConfig.plotPointNum)
       store.set('selectedLocale', this.selectedLocale)
@@ -904,7 +919,6 @@ export default {
         message: this.$t('The application configurations are saved.')
       })
     },
-
     //Device Configs
     renderGUI() {
       this.optionsG0 = []
@@ -912,6 +926,7 @@ export default {
       this.optionsS1G2 = []
       this.optionsS1G3 = []
       this.optionsS2G4 = []
+      this.optionsS2G5 = []
       this.optionsG9 = []
       // this.configMap.G0 = []
       // this.configMap.G1 = []
@@ -935,6 +950,8 @@ export default {
                 // this.configMap.G3.push(measName)
               } else if (i2cAddr === '2' && grp.grpNameShort === 'G4') {
                 this.optionsS2G4.push(optionItem)
+              }else if (i2cAddr === '17' && grp.grpNameShort === 'G5') {
+                this.optionsS2G5.push(optionItem)
               }
             }
           }
@@ -967,23 +984,20 @@ export default {
       this.showG0 = this.optionsG0.length > 0
       this.showS1G1 = this.showS1G2 = this.showS1G3 = '1' in this.i2cAddrInCurrentCfg
       this.showS2G4 = '2' in this.i2cAddrInCurrentCfg
+      this.showS2G5 = '17' in this.i2cAddrInCurrentCfg
       this.showG9 = this.showG9Ht || this.showG9Tilt
       this.guiRendered = true
     },
-
     async readFromDeviceAsync() {
-
       let regList = [...this.commonRegs]
       for (const i2cAddr in this.slaveRegs) {
         if (i2cAddr in this.i2cAddrFromDevice) {
           regList = [...regList, ...this.slaveRegs[i2cAddr]]
         }
       }
-
       //G9
       if (!('SW' in this.i2cAddrFromDevice)) this.i2cAddrFromDevice['SW'] = "0.1"
       console.log('before readFromDeviceAsync, the SW=', this.i2cAddrFromDevice['SW'])
-
       this.showG9Ht = this.showG9Tilt = false
       let hasG9 = false
       for (const regName in this.G9Regs) {
@@ -1006,13 +1020,10 @@ export default {
         }
       }
       if (hasG9) regList.push('G9')
-
       console.log('all reg to be read:', regList)
-
       //read AD first
       ipcRenderer.send('ap-addr-req')
       await delayMs(100)
-
       for (const regName of regList) {
         let result = await ipcRenderer.invoke('ap-req-with-retry', `${regName}=?`, `${regName}=`, 500)
         console.log('apRequest result:', result)
@@ -1032,11 +1043,9 @@ export default {
           console.log(`${regName} not in configMap.`)
         }
       }
-
       //backup the regs
       this.configMapInDevice = JSON.parse(JSON.stringify(this.configMap))  //clone
     },
-
     readFromDevice() {
       this.btnReadFromDeviceLoading = true
       ipcRenderer.invoke('i2c-list-versions-req', 1).then((result) => {
@@ -1066,7 +1075,6 @@ export default {
         this.btnReadFromDeviceLoading = false
       })
     },
-
     canWrite(regName) {
       const reg = this.G9Regs[regName]
       let pass = false
@@ -1082,7 +1090,6 @@ export default {
       }
       return pass
     },
-
     async writeToDeviceAsync() {
       let regList = ['AD', ...this.commonRegs]
       for (const i2cAddr in this.slaveRegs) {
@@ -1093,7 +1100,6 @@ export default {
       //G9
       if (!('SW' in this.i2cAddrFromDevice)) this.i2cAddrFromDevice['SW'] = "0.1"
       console.log('before writeToDeviceAsync, the SW=', this.i2cAddrFromDevice['SW'])
-
       let notCompatible = false
       if (this.showG9Ht) {
         if (!this.canWrite('HC')) {
@@ -1124,7 +1130,6 @@ export default {
         } else regList.push('CC')
       }
       if (!notCompatible) regList.push('G9')
-
       let regListChanged = []
       let unitRegChanged = false
       for (const reg of regList) {
@@ -1141,7 +1146,6 @@ export default {
         regListChanged.push(reg)
       }
       console.log('reg changed:', regListChanged)
-
       for (const regName of regListChanged) {
         let v
         if (typeof this.configMap[regName] === 'object') {
@@ -1161,29 +1165,24 @@ export default {
         //   duration: 2000,
         // })
       }
-
       //if any unit changed
       if (unitRegChanged) {
         await delayMs(100)
         ipcRenderer.send('broadcast-to-others', 'unit-change')
       }
-
       this.$message({
         type: 'success',
         message: this.$t('The device configurations are written.')
       })
     },
-
     writeToDevice() {
       if (!this.guiRendered) {
         this.$message.error(this.$t('text: config not loaded from anywhere'))
         return false
       }
-
       let formValid = false
       this.$refs['form1'].validate((valid) => formValid = valid)
       if (!formValid) return false
-
       this.btnWriteToDeviceLoading = true
       ipcRenderer.invoke('i2c-list-versions-req', 1).then((result) => {
         let i2cAddr2 = {}
@@ -1215,7 +1214,6 @@ export default {
         this.btnWriteToDeviceLoading = false
       })
     },
-
     //restore factory
     async restoreFactorySettingsAsync() {
       this.btnRestoreLoading = true
@@ -1233,7 +1231,6 @@ export default {
         this.btnRestoreLoading = false
       })
     },
-
     restoreFactorySettings() {
       this.$confirm(this.$t('text: restore factory notice'), this.$t('Please confirm'), {
         confirmButtonText: this.$t('Yes'),
@@ -1245,7 +1242,6 @@ export default {
         console.log('restoreFactorySettings canceled')
       })
     },
-
     //reset rain counters
     async resetRainCountersAsync(counterName) {
       let btnLoading
@@ -1273,7 +1269,6 @@ export default {
         btnLoading = false
       })
     },
-
     resetRainCounters(counterName) {
       this.$confirm(this.$t('text: reset counters'), this.$t('Please confirm'), {
         confirmButtonText: this.$t('Yes'),
@@ -1285,7 +1280,6 @@ export default {
         console.log('resetRainCounters canceled')
       })
     },
-
     //Save to file
     saveToFile() {
       if (!this.guiRendered) {
@@ -1319,7 +1313,6 @@ export default {
         this.$message.error(this.$t('Failed in saving to file.'))
       })
     },
-
     //Load from file
     loadFromFile() {
       ipcRenderer.invoke('load-from-file').then((result) => {
@@ -1333,7 +1326,6 @@ export default {
             this.showG9Ht = 'HC' in cfgJson['configMap']
             this.showG9Tilt = 'TD' in cfgJson['configMap']
             setImmediate(this.renderGUI)
-
             console.log('loaded from file succ, the profileVersion: 1.0')
             this.$message({
               type: 'success',
@@ -1391,14 +1383,11 @@ export default {
     }
   },
   created() {
-
     console.log(`locale when created: ${this.$root.$i18n.locale}`)
     this.selectedLocale = this.localeBackup = this.$root.$i18n.locale
-
     //load config
     this.appConfig.dataPollInterval = parseInt(store.get('dataPollInterval', 2))
     this.appConfig.plotPointNum = parseInt(store.get('plotPointNum', 10))
-
   },
   mounted() {
     //ap-addr-got
@@ -1412,7 +1401,6 @@ export default {
     if (!this.apAddr) {
       ipcRenderer.send('ap-addr-req')
     }
-
     //i2c list got
     ipcRenderer.on('i2c-list-got', (event, arg) => {
       this.i2cAddrFromDevice = JSON.parse(JSON.stringify(arg))
@@ -1422,7 +1410,6 @@ export default {
     if (Object.keys(this.i2cAddrFromDevice).length === 0) {
       ipcRenderer.send('i2c-list-req')
     }
-
     //ota
     ipcRenderer.on('current-version-resp', (event, arg) => {
       console.log('current-version-resp:', arg)
@@ -1430,25 +1417,20 @@ export default {
       this.currentVersion = currentVersion
     })
     ipcRenderer.send('current-version-req')
-
     ipcRenderer.on('update-available', (event, arg) => {
       console.log('update-available:', arg)
       this.newVersion = arg
       document.getElementById('versionText').style.cursor = 'pointer'
     })
-
     ipcRenderer.on('ap-resp', (event, arg) => {
       console.log('ap-resp:', arg)
       // if ('CC' in arg && arg['CC'] !== 'C') {
       //   this.calibCountdown = 0
       // }
     })
-
   },
   beforeDestroy() {
     ipcRenderer.removeAllListeners()
   }
-
 }
 </script>
-

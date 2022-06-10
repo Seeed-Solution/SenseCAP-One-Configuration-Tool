@@ -279,6 +279,11 @@ export default {
         // ret.yAxis.minInterval = 10
       } else if (['RD'].includes(measName)) {
         ret.yAxis.minInterval = 60
+      }else if (['CO2'].includes(measName)) {
+        // ret.yAxis.minInterval = 200
+        ret.yAxis.scale = true  //bottom can be non-zero
+        ret.yAxis.minInterval = 200
+        // ret.yAxis.boundaryGap = ['30%', '20%']  //the variable range will lie on the top 1/3
       }
       return ret
     },
