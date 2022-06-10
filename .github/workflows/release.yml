@@ -26,16 +26,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v1
         with:
-          node-version: 12
-
-      - name: Update node-gyp
-        if: startsWith(matrix.os, 'windows')
-        run: |
-          $WhereNode = Get-Command node | Select-Object -ExpandProperty Definition
-          $NodeDirPath = Split-Path $WhereNode -Parent
-          $NodeModulesPath = $NodeDirPath + "\node_modules\npm\node_modules\npm-lifecycle"
-          cd $NodeModulesPath
-          yarn add node-gyp@8.x
+          node-version: 16
 
 #      - name: Install Snapcraft
 #        uses: samuelmeuli/action-snapcraft@v1
