@@ -28,6 +28,14 @@ jobs:
         with:
           node-version: 12
 
+      - name: Update node-gyp
+        run: |
+          $WhereNode = Get-Command node | Select-Object -ExpandProperty Definition
+          $NodeDirPath = Split-Path $WhereNode -Parent
+          $NodeModulesPath = $NodeDirPath + "\node_modules\npm\node_modules\npm-lifecycle"
+          cd $NodeModulesPath
+          npm install node-gyp@8.x
+
 #      - name: Install Snapcraft
 #        uses: samuelmeuli/action-snapcraft@v1
 #        # Only install Snapcraft on Ubuntu
@@ -68,3 +76,4 @@ jobs:
           # macOS notarization API key
           APPLEID: ${{ secrets.apple_id }}
           APPLEIDPASS: ${{ secrets.apple_id_pass }}
+          APPLEASCPROVIDER: ${{ secrets.apple_asc_provider }}
