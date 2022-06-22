@@ -426,7 +426,7 @@ export default {
     ipcRenderer.on('update-fw-end', (event) => {
       // this.isUpdating = false
       console.log('fw update end ...')
-      
+
       setTimeout(() => {
         ipcRenderer.send('broadcast-to-others', 'flash-finished')
       }, 500)

@@ -89,7 +89,22 @@ module.exports = {
         },
         'win': {
           'verifyUpdateCodeSignature': false,
-          'target': ['nsis', 'portable'],
+          'target': [
+            {
+              "target": "nsis",
+              "arch": [
+                "x64",
+                "ia32"
+              ]
+            },
+            {
+              "target": "portable",
+              "arch": [
+                "x64",
+                "ia32"
+              ]
+            }
+          ],
           'icon': 'build/icon.ico',
         },
         'dmg': {
