@@ -20,8 +20,9 @@ exports.grpNameTransZh = {
   "Heating Temperature": "加热区域温度",
   "Tilt Status": "倾倒状态",
   "Particulate Matter": "颗粒物",
-  "GlobalDefinesEnd": "-",
-  "Carbon Dioxide":"二氧化碳"
+  "Carbon Dioxide":"二氧化碳",
+  "Carbon Dioxide Concentration": "二氧化碳浓度",
+  "GlobalDefinesEnd": "-"
 }
 
 exports.changableUnitsMeasMap = {
@@ -103,12 +104,21 @@ exports.slaveGroupDefines = {
     }
   ],
   "3": [],
+  "16":[
+    {
+      grpNameShort: "G5",
+      grpName: "Carbon Dioxide",
+      meas: {
+        "CO2": { name: "Carbon Dioxide Concentration", unit: 'ppm', unitSuffix: '' }
+      }
+    }
+  ],
   "17":[
     {
       grpNameShort: "G5",
       grpName: "Carbon Dioxide",
       meas: {
-        "CO2": { name: "CO2", unit: 'ppm', unitSuffix: '' }
+        "CO2": { name: "Carbon Dioxide Concentration", unit: 'ppm', unitSuffix: '' }
       }
     }
   ],
