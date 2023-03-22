@@ -483,8 +483,31 @@
                     </el-form-item>
                   </div>
 
+                  <div v-if="showS16G5">
+                    <el-divider></el-divider>
+                    <div class="text-subheader">
+                      {{$t('Carbon Dioxide (G5)')}}
+                    </div>
+                    <el-form-item :label="$t('Output List')" prop="G5"
+                      :rules="[rules.required]">
+                      <el-select v-model="configMap.G5" multiple>
+                        <el-option v-for="item in optionsS2G5"
+                          :key="item.value"
+                          :value="item.value"
+                          :label='item.label'></el-option>
+                      </el-select>
+                      <div class="text-note">{{$t('G5.ol')}}</div>
+                    </el-form-item>
+                    <el-form-item :label="$t('Update Interval')" prop="ICO2"
+                      :rules="[rules.required, rules.rng5_3600]">
+                      <el-input v-model.number="configMap.ICO2" type="number">
+                        <template slot="append">{{$t('seconds')}}</template>
+                      </el-input>
+                      <div class="text-note">{{$t('G5.ICO2')}}</div>
+                    </el-form-item>
+                  </div>
 
-                  <div v-if="showS2G5">
+                  <div v-if="showS17G5">
                     <el-divider></el-divider>
                     <div class="text-subheader">
                       {{$t('Carbon Dioxide (G5)')}}
@@ -736,6 +759,9 @@ export default {
       "2": [
         'G4', 'IDUST'
       ],
+      "16": [
+        'G5', 'ICO2'
+      ], 
       "17": [
         'G5', 'ICO2'
       ], 
@@ -779,7 +805,8 @@ export default {
       showS1G2: false,
       showS1G3: false,
       showS2G4: false,
-      showS2G5: false,
+      showS16G5: false,
+      showS17G5: false,
       showG9: false,
       showG9Ht: false,
       showG9Tilt: false,
@@ -851,7 +878,7 @@ export default {
         G4: [],
         IDUST: 1,
         G5: [],
-        ICO2:1,       
+        ICO2: 16,
         G9: [],
         // IH: 15,
         HC: 'N',
@@ -984,7 +1011,8 @@ export default {
       this.showG0 = this.optionsG0.length > 0
       this.showS1G1 = this.showS1G2 = this.showS1G3 = '1' in this.i2cAddrInCurrentCfg
       this.showS2G4 = '2' in this.i2cAddrInCurrentCfg
-      this.showS2G5 = '17' in this.i2cAddrInCurrentCfg
+      this.showS16G5 = '16' in this.i2cAddrInCurrentCfg
+      this.showS17G5 = '17' in this.i2cAddrInCurrentCfg
       this.showG9 = this.showG9Ht || this.showG9Tilt
       this.guiRendered = true
     },
