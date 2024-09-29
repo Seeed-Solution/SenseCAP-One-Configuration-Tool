@@ -312,7 +312,8 @@ export default {
 
     checkDeviceInfo() {
       if (this.eui === '##' || this.hwVersion === '##' || this.swVersion === '##' ||
-          this.dateOfManu === '##' || this.devName === '##')
+          this.dateOfManu === '##' || this.devName === '##' || this.sku === '##' ||
+          this.sensorType === '##')
       {
         console.log('still missing device info ...')
         ipcRenderer.send('dev-info-req')
@@ -322,7 +323,7 @@ export default {
       }
     },
     reqDeviceInfo() {
-      this.eui = this.hwVersion = this.swVersion = this.dateOfManu = this.devName = '##'
+      this.eui = this.hwVersion = this.swVersion = this.dateOfManu = this.devName = this.sku = this.sensorType = '##'
       ipcRenderer.send('dev-info-req')
       this.hIntervalCheckDevInfo = setInterval(this.checkDeviceInfo, 2000)
     },
@@ -330,24 +331,49 @@ export default {
     displaySlaveGroups() {
       this.slaveGroups = []
       this.slaveGroupShortNames = []
-      for (const i2cAddr in slaveGroupDefines) {
-        if (i2cAddr in this.detectedI2cAddrs) {
-          for (const grp of slaveGroupDefines[i2cAddr]) {
-            for (const measName in grp.meas) {
-              this.units[measName] = grp.meas[measName]["unit"]
-              this.values[measName] = "##"
-              this.dataPoints[measName] = {
-                columns: ['time', 'value'],
-                rows: []
-              }
+      if (this.sensorType !== 'unknown' && this.sensorType in this.ngSensorTypes)
+      {
+        // for gen2 device
+        for (const grp of this.ngSensorTypes[this.sensorType])
+        {
+          for (const measName in this.ngGroupDefines[grp]["meas"])
+          {
+            this.units[measName] = this.ngGroupDefines[grp]["meas"][measName]["unit"]
+            this.values[measName] = "##"
+            this.dataPoints[measName] = {
+              columns: ['time', 'value'],
+              rows: []
             }
-            //add grp last, because this will trigger the re-render
-            //before this, units and values should be updated first
-            this.slaveGroups.push(JSON.parse(JSON.stringify(grp)))  //deep copy
-            this.slaveGroupShortNames.push(grp.grpNameShort)
+          }
+          //add grp last, because this will trigger the re-render
+          //before this, units and values should be updated first
+          this.slaveGroups.push(JSON.parse(JSON.stringify(this.ngGroupDefines[grp])))  //deep copy
+          this.slaveGroupShortNames.push(this.ngGroupDefines[grp]["grpNameShort"])
+        }
+      }
+      else
+      {
+        // for gen1 device
+        for (const i2cAddr in slaveGroupDefines) {
+          if (i2cAddr in this.detectedI2cAddrs) {
+            for (const grp of slaveGroupDefines[i2cAddr]) {
+              for (const measName in grp.meas) {
+                this.units[measName] = grp.meas[measName]["unit"]
+                this.values[measName] = "##"
+                this.dataPoints[measName] = {
+                  columns: ['time', 'value'],
+                  rows: []
+                }
+              }
+              //add grp last, because this will trigger the re-render
+              //before this, units and values should be updated first
+              this.slaveGroups.push(JSON.parse(JSON.stringify(grp)))  //deep copy
+              this.slaveGroupShortNames.push(grp.grpNameShort)
+            }
           }
         }
       }
+
       let miscGroupAvailable = false
       let miscGroup = JSON.parse(JSON.stringify(miscGroupDefine))
       for (const measName in miscGroup.meas) {
@@ -361,6 +387,13 @@ export default {
             show = true
             break
           }
+          else if (i2cAddr in this.detectedI2cAddrs && compareVersions.compare(this.hwVersion, '2.0', '>=')) {
+            // for gen2 device
+            miscGroupAvailable = true
+            show = true
+            break
+          }
+
           i++
         }
         if (show) {
@@ -425,17 +458,51 @@ export default {
     this.plotPointNum  = parseInt(store.get('plotPointNum', 10))  //points
     this.pollInterval = parseInt(store.get('dataPollInterval', 2))  //sec
 
+    this.ngSkus = {}    
+    this.ngSensorTypes = {}
+    this.ngGroupDefines = {}
+
+    // Can't work if we can not read ng-config(config.json)
+    try{
+      // console.log("sendSync read-ng-config")
+      let result = ipcRenderer.sendSync('read-ng-config')
+      let ngCfg = JSON.parse(result)
+      console.log(ngCfg)
+      if ("ngSkus" in ngCfg && "ngSensorTypes" in ngCfg && "ngGroupDefines" in ngCfg) {
+        this.ngSkus = ngCfg['ngSkus']
+        this.ngSensorTypes = ngCfg['ngSensorTypes']
+        this.ngGroupDefines = ngCfg['ngGroupDefines']
+      }
+      else {
+        console.log('read ng config file error: corruptted')
+        this.$message.error(this.$t('Failed in reading config.json: corruptted'))
+      }
+    } catch(error) {
+      console.log('read ng config file error:', error)
+      this.$message.error(this.$t('Failed in reading config.json: not existed'))
+    }
+
     //init properties for responsive rendering
-    for (const i2cAddr in slaveGroupDefines) {
-      for (const grp of slaveGroupDefines[i2cAddr]) {
-        for (const measName in grp.meas) {
-          this.$set(this.units, measName, '#')
-          this.$set(this.values, measName, "##")
-          this.$set(this.dataPoints, measName, {
-            columns: ['time', 'value'],
-            rows: []
-          })
-        }
+    // for (const i2cAddr in slaveGroupDefines) {
+    //   for (const grp of slaveGroupDefines[i2cAddr]) {
+    //     for (const measName in grp.meas) {
+    //       this.$set(this.units, measName, '#')
+    //       this.$set(this.values, measName, "##")
+    //       this.$set(this.dataPoints, measName, {
+    //         columns: ['time', 'value'],
+    //         rows: []
+    //       })
+    //     }
+    //   }
+    // }
+    for (const grp in this.ngGroupDefines) {
+      for (const measName in this.ngGroupDefines[grp]["meas"]) {
+        this.$set(this.units, measName, '#')
+        this.$set(this.values, measName, "##")
+        this.$set(this.dataPoints, measName, {
+          columns: ['time', 'value'],
+          rows: []
+        })
       }
     }
     for (const measName in miscGroupDefine.meas) {
@@ -518,16 +585,20 @@ export default {
       console.log(arg)
       this.detectedI2cAddrs = JSON.parse(JSON.stringify(arg))
       console.log('i2c-list-got:', this.detectedI2cAddrs)
-    })
+    }) 
 
     //dev info got
     ipcRenderer.on('dev-info-resp', (event, arg) => {
       let {'S/N': SN, HW, SW, MD, NA} = arg
       this.eui = SN
+      this.sku = SN.substring(0,9)
       this.hwVersion = HW
       this.swVersion = SW
       this.dateOfManu = MD
       this.devName = NA
+      if (this.sku in this.ngSkus) this.sensorType = this.ngSkus[this.sku]
+      else this.sensorType = 'unknown' // or gen1 devices
+
       if (this.hIntervalCheckDevInfo) {
         clearInterval(this.hIntervalCheckDevInfo)
         this.hIntervalCheckDevInfo = null

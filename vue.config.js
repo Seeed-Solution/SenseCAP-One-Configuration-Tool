@@ -78,7 +78,13 @@ module.exports = {
         // options placed here will be merged with default configuration and passed to electron-builder
         'appId': 'cc.seeed.sensecap.tools.one',
         'productName': 'SenseCAP One Configuration Tool',
-        'copyright': 'Copyright ©2008-2020 Seeed Technology Co.,Ltd.',
+        'copyright': 'Copyright ©2008-2024 Seeed Technology Co.,Ltd.',
+        'extraFiles':[
+          {
+            'from':'./config.json',
+            'to':'.',
+          }
+        ],
         'nsis': {
           'installerIcon': 'build/icon.ico',
           'installerHeader': 'build/icon.png',

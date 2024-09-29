@@ -3,6 +3,7 @@
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 import { app, protocol, BrowserWindow, shell, ipcMain, dialog } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
+// const {SerialPort} = require('serialport')
 const SerialPort = require('serialport')
 const Menu = require("electron-create-menu")
 import i18next from 'i18next'
@@ -15,6 +16,7 @@ const fsPromises = fs.promises
 const Store = require('electron-store')
 const store = new Store()
 const { Readable } = require('stream')
+// const { ReadlineParser } = require('@serialport/parser-readline')
 const ReadlineParser = require('@serialport/parser-readline')
 const dateFormat = require('dateformat')
 const { once, EventEmitter } = require('events')
@@ -414,6 +416,7 @@ ipcMain.on('init-serial-req', (event, arg) => {
 })
 
 function serialOpen(event) {
+  // serial = new SerialPort({path: selectedSerialPort,
   serial = new SerialPort(selectedSerialPort, {
     baudRate: selectedSerialBaud || 115200,
     autoOpen: false
@@ -770,6 +773,7 @@ ipcMain.on('dev-info-req', async (event) => {
     let deviceInfoObj = {...snObj, ...versionsMap, 'MD': dateOfManuFriendlyStr, ...nameObj}
     logger.debug('deviceInfoObj:', deviceInfoObj)
     event.reply('dev-info-resp', deviceInfoObj)
+    broadcastMultiWindows('dev-info-got', deviceInfoObj, winSettings)
 
   } catch (error) {
     logger.warn('error when querying device info:', error)
@@ -1095,6 +1099,27 @@ ipcMain.on('broadcast-to-others', (event, eventName, ...args) => {
   }
 })
 
+ipcMain.on('read-ng-config', (event) => {
+  logger.info('handle read-ng-config call ...')
+  let filePath = './config.json'
+
+  try{
+    fs.accessSync(filePath, fs.constants.R_OK)
+  } catch (error) {
+    logger.warn('can not access file:', filePath)
+    logger.debug(error)
+    throw new Error('can not read config.json')
+  }
+  try {
+    event.returnValue = fs.readFileSync(filePath, {
+      encoding: 'utf8'
+    })
+  } catch (error) {
+    logger.warn('error when read file:', filePath)
+    logger.debug(error)
+    throw new Error('read config.json error')
+  }  
+})
 
 // Settings Save to File / Load from File
 function genFilePath(ext) {

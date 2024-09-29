@@ -109,7 +109,12 @@
     "G5": {
       "ol": "G5数据组的输出列表（同时影响主页面的数据更新）。",
       "ICO2": "有效范围 [1, 3600]。"
-    },     
+    },
+    "Noise (G6)": "噪声 (G6)",
+    "G6": {
+      "ol": "G6数据组的输出列表（同时影响主页面的数据更新）。",
+      "INOISE": "有效范围 [1, 3600]。"
+    },       
     "Counter Reset Mode": "计数清零模式",
     "Rain Accumulation Limit": "累计降雨量极限值",
     "Rain Duration Limit": "累计降雨时间极限值",
@@ -117,6 +122,7 @@
     "Manual Counter Reset": "手动清零",
     "Reset Rain Accumulation": "累计降雨量清零",
     "Reset Rain Duration": "累计降雨时间清零",
+    "Reset Sunlight Duration": "日照时长清零",
     "Misc. (G9)": "其它 (G9)",
     "G9": {
       "ol": "G9数据组的输出列表（同时影响主页面的数据更新）。",
@@ -330,6 +336,11 @@
                           :label="item.label"></el-option>
                       </el-select>
                     </el-form-item>
+                    <el-form-item :label="$t('Manual Counter Reset')">
+                      <el-button size="mini"
+                        @click="resetCounters('sd')"
+                        :loading="btnResetSunDurationLoading">{{$t('Reset Sunlight Duration')}}</el-button>
+                    </el-form-item>
                   </div>
 
                   <div v-if="showS1G2">
@@ -449,11 +460,11 @@
                     </el-form-item>
                     <el-form-item :label="$t('Manual Counter Reset')">
                       <el-button size="mini"
-                        @click="resetRainCounters('acc')"
+                        @click="resetCounters('acc')"
                         :loading="btnResetRainAccLoading"
                         :disabled="btnResetRainDurationLoading">{{$t('Reset Rain Accumulation')}}</el-button>
                       <el-button size="mini"
-                        @click="resetRainCounters('dur')"
+                        @click="resetCounters('dur')"
                         :loading="btnResetRainDurationLoading"
                         :disabled="btnResetRainAccLoading">{{$t('Reset Rain Duration')}}</el-button>
                     </el-form-item>
@@ -528,6 +539,30 @@
                         <template slot="append">{{$t('seconds')}}</template>
                       </el-input>
                       <div class="text-note">{{$t('G5.ICO2')}}</div>
+                    </el-form-item>
+                  </div>
+
+                  <div v-if="showG6">
+                    <el-divider></el-divider>
+                    <div class="text-subheader">
+                      {{$t('Noise (G6)')}}
+                    </div>
+                    <el-form-item :label="$t('Output List')" prop="G6"
+                      :rules="[rules.required]">
+                      <el-select v-model="configMap.G6" multiple>
+                        <el-option v-for="item in optionsG6"
+                          :key="item.value"
+                          :value="item.value"
+                          :label='item.label'></el-option>
+                      </el-select>
+                      <div class="text-note">{{$t('G6.ol')}}</div>
+                    </el-form-item>
+                    <el-form-item :label="$t('Update Interval')" prop="INOISE"
+                      :rules="[rules.required, rules.rng1_3600]">
+                      <el-input v-model.number="configMap.INOISE" type="number">
+                        <template slot="append">{{$t('seconds')}}</template>
+                      </el-input>
+                      <div class="text-note">{{$t('G6.INOISE')}}</div>
                     </el-form-item>
                   </div>
 
@@ -765,6 +800,9 @@ export default {
       "17": [
         'G5', 'ICO2'
       ], 
+      "18": [
+        'G6', 'INOISE'
+      ], 
     }
     this.G9Regs = {
       //"G9" = ORed these regs
@@ -782,10 +820,16 @@ export default {
       btnResetRainDurationLoading: false,
       btnResetRainAccLoading: false,
       btnCompassCalibLoading: false,
+      btnResetSunDurationLoading: false,
       //////////////////////////////////////////
       //global Vars
       tabIndex: 1,
       apAddr: '',
+      eui: '##',
+      sku: '##',
+      hwVersion: '##',
+      swVersion: "##",
+      sensorType: '##',
       i2cAddrFromDevice: {},
       i2cAddrInCurrentCfg: {},  //cfg on the GUI, it might be loaded from file, or from device
       //App Configs
@@ -807,6 +851,7 @@ export default {
       showS2G4: false,
       showS16G5: false,
       showS17G5: false,
+      showG6: false,
       showG9: false,
       showG9Ht: false,
       showG9Tilt: false,
@@ -848,6 +893,7 @@ export default {
       optionsS1G3: [],
       optionsS2G4: [],
       optionsS2G5: [],
+      optionsG6: [],
       optionsG9: [],
       configMap: {
         CP: 3,
@@ -899,7 +945,7 @@ export default {
       if (this.selectedLocale) {
         return [
           {value: "M", label: "M - " + this.$t("Manual Reset")},
-          {value: "A", label: "A - " + this.$t("Reset After Read")},
+          // {value: "A", label: "A - " + this.$t("Reset After Read")},
           {value: "L", label: "L - " + this.$t("Overflow Reset")},
         ]
       }
@@ -954,31 +1000,59 @@ export default {
       this.optionsS1G3 = []
       this.optionsS2G4 = []
       this.optionsS2G5 = []
+      this.optionsG6 = []
       this.optionsG9 = []
       // this.configMap.G0 = []
       // this.configMap.G1 = []
       // this.configMap.G2 = []
       // this.configMap.G3 = []
-      for (const i2cAddr in slaveGroupDefines) {
-        if (i2cAddr in this.i2cAddrInCurrentCfg) {
-          for (const grp of slaveGroupDefines[i2cAddr]) {
-            for (const measName in grp.meas) {
-              let optionItem = {value: measName, label: measName + ' - ' + this.$t(grp.meas[measName]["name"])}
-              this.optionsG0.push(optionItem)
-              //this.configMap.G0.push(measName)  //select all by default
-              if (i2cAddr === '1' && grp.grpNameShort === 'G1') {
-                this.optionsS1G1.push(optionItem)
-                // this.configMap.G1.push(measName)  //we assume that multiple G1 on one device is impossible
-              } else if (i2cAddr === '1' && grp.grpNameShort === 'G2') {
-                this.optionsS1G2.push(optionItem)
-                // this.configMap.G2.push(measName)
-              } else if (i2cAddr === '1' && grp.grpNameShort === 'G3') {
-                this.optionsS1G3.push(optionItem)
-                // this.configMap.G3.push(measName)
-              } else if (i2cAddr === '2' && grp.grpNameShort === 'G4') {
-                this.optionsS2G4.push(optionItem)
-              }else if (i2cAddr === '17' && grp.grpNameShort === 'G5') {
-                this.optionsS2G5.push(optionItem)
+      if (this.sensorType !== 'unknown' && this.sensorType in this.ngSensorTypes) {
+        // for gen2 device
+        for (const grp of this.ngSensorTypes[this.sensorType])
+        {
+          for (const measName in this.ngGroupDefines[grp]["meas"])
+          {
+            let optionItem = {value: measName, label: measName + ' - ' + this.$t(this.ngGroupDefines[grp]["meas"][measName]["name"])}
+            this.optionsG0.push(optionItem)
+            if (grp === "G1_THP" || grp === "G1_THPL" || grp == "G1_THP_TSR") {
+              this.optionsS1G1.push(optionItem)
+            } else if (grp === "G2") {
+              this.optionsS1G2.push(optionItem)
+            } else if (grp === "G3") {
+              this.optionsS1G3.push(optionItem)
+            } else if (grp === "G4") {
+              this.optionsS2G4.push(optionItem)
+            } else if (grp === "G5") {
+              this.optionsS2G5.push(optionItem)
+            } else if (grp === "G6") {
+              this.optionsG6.push(optionItem)
+            }
+          }
+        }
+      }
+      else {
+        // for gen1 device
+        for (const i2cAddr in slaveGroupDefines) {
+          if (i2cAddr in this.i2cAddrInCurrentCfg) {
+            for (const grp of slaveGroupDefines[i2cAddr]) {
+              for (const measName in grp.meas) {
+                let optionItem = {value: measName, label: measName + ' - ' + this.$t(grp.meas[measName]["name"])}
+                this.optionsG0.push(optionItem)
+                //this.configMap.G0.push(measName)  //select all by default
+                if (i2cAddr === '1' && grp.grpNameShort === 'G1') {
+                  this.optionsS1G1.push(optionItem)
+                  // this.configMap.G1.push(measName)  //we assume that multiple G1 on one device is impossible
+                } else if (i2cAddr === '1' && grp.grpNameShort === 'G2') {
+                  this.optionsS1G2.push(optionItem)
+                  // this.configMap.G2.push(measName)
+                } else if (i2cAddr === '1' && grp.grpNameShort === 'G3') {
+                  this.optionsS1G3.push(optionItem)
+                  // this.configMap.G3.push(measName)
+                } else if (i2cAddr === '2' && grp.grpNameShort === 'G4') {
+                  this.optionsS2G4.push(optionItem)
+                }else if (i2cAddr === '17' && grp.grpNameShort === 'G5') {
+                  this.optionsS2G5.push(optionItem)
+                }
               }
             }
           }
@@ -1010,17 +1084,42 @@ export default {
       this.unitOptions = unitOptions1
       this.showG0 = this.optionsG0.length > 0
       this.showS1G1 = this.showS1G2 = this.showS1G3 = '1' in this.i2cAddrInCurrentCfg
-      this.showS2G4 = '2' in this.i2cAddrInCurrentCfg
-      this.showS16G5 = '16' in this.i2cAddrInCurrentCfg
-      this.showS17G5 = '17' in this.i2cAddrInCurrentCfg
-      this.showG9 = this.showG9Ht || this.showG9Tilt
-      this.guiRendered = true
+      if (this.sensorType !== 'unknown' && this.sensorType in this.ngSensorTypes) {
+        // for gen2 device
+        if (this.ngSensorTypes[this.sensorType].indexOf("G4") !== -1) this.showS2G4 = true;
+        else this.showS2G4 = false;
+        if (this.ngSensorTypes[this.sensorType].indexOf("G5") !== -1) this.showS17G5 = true;
+        else this.showS17G5 = false;
+        if (this.ngSensorTypes[this.sensorType].indexOf("G6") !== -1) this.showG6 = true;
+        else this.showG6 = false;
+        this.showG9 = this.showG9Ht || this.showG9Tilt
+        this.guiRendered = true
+      }
+      else {
+        // for gen1 device
+        this.showS2G4 = '2' in this.i2cAddrInCurrentCfg
+        this.showS16G5 = '16' in this.i2cAddrInCurrentCfg
+        this.showS17G5 = '17' in this.i2cAddrInCurrentCfg
+        this.showG9 = this.showG9Ht || this.showG9Tilt
+        this.guiRendered = true
+      }
     },
     async readFromDeviceAsync() {
       let regList = [...this.commonRegs]
-      for (const i2cAddr in this.slaveRegs) {
-        if (i2cAddr in this.i2cAddrFromDevice) {
-          regList = [...regList, ...this.slaveRegs[i2cAddr]]
+
+      if (this.sensorType !== 'unknown' && this.sensorType in this.ngSensorTypes) {
+        // for gen2 device
+        regList = [...regList, ...this.slaveRegs['1']]
+        if (this.ngSensorTypes[this.sensorType].indexOf("G4") !== -1) regList = [...regList, ...this.slaveRegs['2']]
+        if (this.ngSensorTypes[this.sensorType].indexOf("G5") !== -1) regList = [...regList, ...this.slaveRegs['17']]
+        if (this.ngSensorTypes[this.sensorType].indexOf("G6") !== -1) regList = [...regList, ...this.slaveRegs['18']]
+      }
+      else {
+        // for gen1 device
+        for (const i2cAddr in this.slaveRegs) {
+          if (i2cAddr in this.i2cAddrFromDevice) {
+            regList = [...regList, ...this.slaveRegs[i2cAddr]]
+          }
         }
       }
       //G9
@@ -1035,6 +1134,10 @@ export default {
           if (i2cAddr in this.i2cAddrFromDevice
             && compareVersions.compare(this.i2cAddrFromDevice['SW'], this.G9Regs[regName].commVer[i], '>=')
             && compareVersions.compare(this.i2cAddrFromDevice[i2cAddr], this.G9Regs[regName].drvVer[i], '>=')) {
+            show = true
+            break
+          }
+          else if (compareVersions.compare(this.hwVersion, '2.0', '>=')) {
             show = true
             break
           }
@@ -1084,6 +1187,8 @@ export default {
           throw new Error('i2cAddrFromDevice empty')
         } else {
           this.i2cAddrFromDevice = result
+          // try read hw version
+          if (this.hwVersion === "##") ipcRenderer.send('dev-info-req')
           return this.readFromDeviceAsync()
         }
       }).then(() => {
@@ -1271,19 +1376,23 @@ export default {
       })
     },
     //reset rain counters
-    async resetRainCountersAsync(counterName) {
+    async resetCountersAsync(counterName) {
       let btnLoading
       let cmd
       if (counterName === "acc") {
         btnLoading = this.btnResetRainAccLoading
         cmd = 'CRA=1'
-      } else {
+      } else if (counterName === "sd") {
+        btnLoading = this.btnResetSunDurationLoading
+        cmd = 'CSD=1'
+      }
+      else {
         btnLoading = this.btnResetRainDurationLoading
         cmd = 'CRD=1'
       }
       btnLoading = true
       ipcRenderer.invoke('ap-req-with-retry', cmd, cmd, 3000).then((result) => {
-        console.log(`resetRainCountersAsync succ:`, result)
+        console.log(`resetCountersAsync succ:`, result)
         if (result) {
           this.$message({
             type: 'success',
@@ -1297,15 +1406,15 @@ export default {
         btnLoading = false
       })
     },
-    resetRainCounters(counterName) {
+    resetCounters(counterName) {
       this.$confirm(this.$t('text: reset counters'), this.$t('Please confirm'), {
         confirmButtonText: this.$t('Yes'),
         cancelButtonText: this.$t('No'),
         type: 'warning'
       }).then(() => {
-        setImmediate(this.resetRainCountersAsync, counterName)
+        setImmediate(this.resetCountersAsync, counterName)
       }).catch(() => {
-        console.log('resetRainCounters canceled')
+        console.log('resetCounters canceled')
       })
     },
     //Save to file
@@ -1416,6 +1525,30 @@ export default {
     //load config
     this.appConfig.dataPollInterval = parseInt(store.get('dataPollInterval', 2))
     this.appConfig.plotPointNum = parseInt(store.get('plotPointNum', 10))
+
+    this.ngSkus = {}    
+    this.ngSensorTypes = {}
+    this.ngGroupDefines = {}
+
+    // Can't work if we can not read ng-config(config.json)
+    try{
+      // console.log("sendSync read-ng-config")
+      let result = ipcRenderer.sendSync('read-ng-config')
+      let ngCfg = JSON.parse(result)
+      console.log(ngCfg)
+      if ("ngSkus" in ngCfg && "ngSensorTypes" in ngCfg && "ngGroupDefines" in ngCfg) {
+        this.ngSkus = ngCfg['ngSkus']
+        this.ngSensorTypes = ngCfg['ngSensorTypes']
+        this.ngGroupDefines = ngCfg['ngGroupDefines']
+      }
+      else {
+        console.log('read ng config file error: corruptted')
+        this.$message.error(this.$t('Failed in reading config.json: corruptted'))
+      }
+    } catch(error) {
+      console.log('read ng config file error:', error)
+      this.$message.error(this.$t('Failed in reading config.json: not existed'))
+    }
   },
   mounted() {
     //ap-addr-got
@@ -1456,6 +1589,36 @@ export default {
       //   this.calibCountdown = 0
       // }
     })
+    //dev info got
+    ipcRenderer.on('dev-info-resp', (event, arg) => {
+      let {'S/N': SN, HW, SW, MD, NA} = arg
+      this.eui = SN
+      this.sku = SN.substring(0,9)
+      this.hwVersion = HW
+      this.swVersion = SW
+      this.devName = NA
+      if (this.sku in this.ngSkus) this.sensorType = this.ngSkus[this.sku]
+      else this.sensorType = 'unknown' // or gen1 devices
+      console.log("hwVersion: ", this.hwVersion)
+      console.log("sensorType: ", this.sensorType)
+    })
+    ipcRenderer.on('dev-info-resp-error', (event, arg) => {
+      this.$message.error(this.$t('text: dev-info-error'))
+    })
+
+    ipcRenderer.on('dev-info-got', (event, arg) => {
+      let {'S/N': SN, HW, SW, MD, NA} = arg
+      this.eui = SN
+      this.sku = SN.substring(0,9)
+      this.hwVersion = HW
+      this.swVersion = SW
+      this.devName = NA
+      if (this.sku in this.ngSkus) this.sensorType = this.ngSkus[this.sku]
+      else this.sensorType = 'unknown' // or gen1 devices
+      console.log("dev-info-got hwVersion: ", this.hwVersion)
+      console.log("dev-info-got sensorType: ", this.sensorType)
+    })
+
   },
   beforeDestroy() {
     ipcRenderer.removeAllListeners()
