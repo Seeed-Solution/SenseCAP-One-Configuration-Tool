@@ -760,7 +760,10 @@ import { slaveGroupDefines,
   miscGroupDefine,
   changableUnitsMeasMap,
   displayStrForUnit,
-  units
+  units,
+  ngSkus,
+  ngSensorTypes,
+  ngGroupDefines
 } from '@/global-defines'
 import { compare2Objects } from '@/utils'
 import compareVersions from 'compare-versions'
@@ -1006,13 +1009,13 @@ export default {
       // this.configMap.G1 = []
       // this.configMap.G2 = []
       // this.configMap.G3 = []
-      if (this.sensorType !== 'unknown' && this.sensorType in this.ngSensorTypes) {
+      if (this.sensorType !== 'unknown' && this.sensorType in ngSensorTypes) {
         // for gen2 device
-        for (const grp of this.ngSensorTypes[this.sensorType])
+        for (const grp of ngSensorTypes[this.sensorType])
         {
-          for (const measName in this.ngGroupDefines[grp]["meas"])
+          for (const measName in ngGroupDefines[grp]["meas"])
           {
-            let optionItem = {value: measName, label: measName + ' - ' + this.$t(this.ngGroupDefines[grp]["meas"][measName]["name"])}
+            let optionItem = {value: measName, label: measName + ' - ' + this.$t(ngGroupDefines[grp]["meas"][measName]["name"])}
             this.optionsG0.push(optionItem)
             if (grp === "G1_THP" || grp === "G1_THPL" || grp == "G1_THP_TSR") {
               this.optionsS1G1.push(optionItem)
@@ -1084,13 +1087,13 @@ export default {
       this.unitOptions = unitOptions1
       this.showG0 = this.optionsG0.length > 0
       this.showS1G1 = this.showS1G2 = this.showS1G3 = '1' in this.i2cAddrInCurrentCfg
-      if (this.sensorType !== 'unknown' && this.sensorType in this.ngSensorTypes) {
+      if (this.sensorType !== 'unknown' && this.sensorType in ngSensorTypes) {
         // for gen2 device
-        if (this.ngSensorTypes[this.sensorType].indexOf("G4") !== -1) this.showS2G4 = true;
+        if (ngSensorTypes[this.sensorType].indexOf("G4") !== -1) this.showS2G4 = true;
         else this.showS2G4 = false;
-        if (this.ngSensorTypes[this.sensorType].indexOf("G5") !== -1) this.showS17G5 = true;
+        if (ngSensorTypes[this.sensorType].indexOf("G5") !== -1) this.showS17G5 = true;
         else this.showS17G5 = false;
-        if (this.ngSensorTypes[this.sensorType].indexOf("G6") !== -1) this.showG6 = true;
+        if (ngSensorTypes[this.sensorType].indexOf("G6") !== -1) this.showG6 = true;
         else this.showG6 = false;
         this.showG9 = this.showG9Ht || this.showG9Tilt
         this.guiRendered = true
@@ -1107,12 +1110,12 @@ export default {
     async readFromDeviceAsync() {
       let regList = [...this.commonRegs]
 
-      if (this.sensorType !== 'unknown' && this.sensorType in this.ngSensorTypes) {
+      if (this.sensorType !== 'unknown' && this.sensorType in ngSensorTypes) {
         // for gen2 device
         regList = [...regList, ...this.slaveRegs['1']]
-        if (this.ngSensorTypes[this.sensorType].indexOf("G4") !== -1) regList = [...regList, ...this.slaveRegs['2']]
-        if (this.ngSensorTypes[this.sensorType].indexOf("G5") !== -1) regList = [...regList, ...this.slaveRegs['17']]
-        if (this.ngSensorTypes[this.sensorType].indexOf("G6") !== -1) regList = [...regList, ...this.slaveRegs['18']]
+        if (ngSensorTypes[this.sensorType].indexOf("G4") !== -1) regList = [...regList, ...this.slaveRegs['2']]
+        if (ngSensorTypes[this.sensorType].indexOf("G5") !== -1) regList = [...regList, ...this.slaveRegs['17']]
+        if (ngSensorTypes[this.sensorType].indexOf("G6") !== -1) regList = [...regList, ...this.slaveRegs['18']]
       }
       else {
         // for gen1 device
@@ -1525,30 +1528,6 @@ export default {
     //load config
     this.appConfig.dataPollInterval = parseInt(store.get('dataPollInterval', 2))
     this.appConfig.plotPointNum = parseInt(store.get('plotPointNum', 10))
-
-    this.ngSkus = {}    
-    this.ngSensorTypes = {}
-    this.ngGroupDefines = {}
-
-    // Can't work if we can not read ng-config(config.json)
-    try{
-      // console.log("sendSync read-ng-config")
-      let result = ipcRenderer.sendSync('read-ng-config')
-      let ngCfg = JSON.parse(result)
-      console.log(ngCfg)
-      if ("ngSkus" in ngCfg && "ngSensorTypes" in ngCfg && "ngGroupDefines" in ngCfg) {
-        this.ngSkus = ngCfg['ngSkus']
-        this.ngSensorTypes = ngCfg['ngSensorTypes']
-        this.ngGroupDefines = ngCfg['ngGroupDefines']
-      }
-      else {
-        console.log('read ng config file error: corruptted')
-        this.$message.error(this.$t('Failed in reading config.json: corruptted'))
-      }
-    } catch(error) {
-      console.log('read ng config file error:', error)
-      this.$message.error(this.$t('Failed in reading config.json: not existed'))
-    }
   },
   mounted() {
     //ap-addr-got
@@ -1597,7 +1576,7 @@ export default {
       this.hwVersion = HW
       this.swVersion = SW
       this.devName = NA
-      if (this.sku in this.ngSkus) this.sensorType = this.ngSkus[this.sku]
+      if (this.sku in ngSkus) this.sensorType = ngSkus[this.sku]
       else this.sensorType = 'unknown' // or gen1 devices
       console.log("hwVersion: ", this.hwVersion)
       console.log("sensorType: ", this.sensorType)
@@ -1613,7 +1592,7 @@ export default {
       this.hwVersion = HW
       this.swVersion = SW
       this.devName = NA
-      if (this.sku in this.ngSkus) this.sensorType = this.ngSkus[this.sku]
+      if (this.sku in ngSkus) this.sensorType = ngSkus[this.sku]
       else this.sensorType = 'unknown' // or gen1 devices
       console.log("dev-info-got hwVersion: ", this.hwVersion)
       console.log("dev-info-got sensorType: ", this.sensorType)

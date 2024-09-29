@@ -79,12 +79,6 @@ module.exports = {
         'appId': 'cc.seeed.sensecap.tools.one',
         'productName': 'SenseCAP One Configuration Tool',
         'copyright': 'Copyright ©2008-2024 Seeed Technology Co.,Ltd.',
-        'extraFiles':[
-          {
-            'from':'./config.json',
-            'to':'.',
-          }
-        ],
         'nsis': {
           'installerIcon': 'build/icon.ico',
           'installerHeader': 'build/icon.png',

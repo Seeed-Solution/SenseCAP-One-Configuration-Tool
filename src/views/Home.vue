@@ -155,7 +155,10 @@ import VeLine from 'v-charts/lib/line.common'
 import { slaveGroupDefines,
   miscGroupDefine,
   changableUnitsMeasMap,
-  displayStrForUnit
+  displayStrForUnit,
+  ngSkus,
+  ngSensorTypes,
+  ngGroupDefines
 } from '@/global-defines'
 import compareVersions from 'compare-versions'
 
@@ -331,14 +334,14 @@ export default {
     displaySlaveGroups() {
       this.slaveGroups = []
       this.slaveGroupShortNames = []
-      if (this.sensorType !== 'unknown' && this.sensorType in this.ngSensorTypes)
+      if (this.sensorType !== 'unknown' && this.sensorType in ngSensorTypes)
       {
         // for gen2 device
-        for (const grp of this.ngSensorTypes[this.sensorType])
+        for (const grp of ngSensorTypes[this.sensorType])
         {
-          for (const measName in this.ngGroupDefines[grp]["meas"])
+          for (const measName in ngGroupDefines[grp]["meas"])
           {
-            this.units[measName] = this.ngGroupDefines[grp]["meas"][measName]["unit"]
+            this.units[measName] = ngGroupDefines[grp]["meas"][measName]["unit"]
             this.values[measName] = "##"
             this.dataPoints[measName] = {
               columns: ['time', 'value'],
@@ -347,8 +350,8 @@ export default {
           }
           //add grp last, because this will trigger the re-render
           //before this, units and values should be updated first
-          this.slaveGroups.push(JSON.parse(JSON.stringify(this.ngGroupDefines[grp])))  //deep copy
-          this.slaveGroupShortNames.push(this.ngGroupDefines[grp]["grpNameShort"])
+          this.slaveGroups.push(JSON.parse(JSON.stringify(ngGroupDefines[grp])))  //deep copy
+          this.slaveGroupShortNames.push(ngGroupDefines[grp]["grpNameShort"])
         }
       }
       else
@@ -458,30 +461,6 @@ export default {
     this.plotPointNum  = parseInt(store.get('plotPointNum', 10))  //points
     this.pollInterval = parseInt(store.get('dataPollInterval', 2))  //sec
 
-    this.ngSkus = {}    
-    this.ngSensorTypes = {}
-    this.ngGroupDefines = {}
-
-    // Can't work if we can not read ng-config(config.json)
-    try{
-      // console.log("sendSync read-ng-config")
-      let result = ipcRenderer.sendSync('read-ng-config')
-      let ngCfg = JSON.parse(result)
-      console.log(ngCfg)
-      if ("ngSkus" in ngCfg && "ngSensorTypes" in ngCfg && "ngGroupDefines" in ngCfg) {
-        this.ngSkus = ngCfg['ngSkus']
-        this.ngSensorTypes = ngCfg['ngSensorTypes']
-        this.ngGroupDefines = ngCfg['ngGroupDefines']
-      }
-      else {
-        console.log('read ng config file error: corruptted')
-        this.$message.error(this.$t('Failed in reading config.json: corruptted'))
-      }
-    } catch(error) {
-      console.log('read ng config file error:', error)
-      this.$message.error(this.$t('Failed in reading config.json: not existed'))
-    }
-
     //init properties for responsive rendering
     // for (const i2cAddr in slaveGroupDefines) {
     //   for (const grp of slaveGroupDefines[i2cAddr]) {
@@ -495,8 +474,8 @@ export default {
     //     }
     //   }
     // }
-    for (const grp in this.ngGroupDefines) {
-      for (const measName in this.ngGroupDefines[grp]["meas"]) {
+    for (const grp in ngGroupDefines) {
+      for (const measName in ngGroupDefines[grp]["meas"]) {
         this.$set(this.units, measName, '#')
         this.$set(this.values, measName, "##")
         this.$set(this.dataPoints, measName, {
@@ -596,7 +575,7 @@ export default {
       this.swVersion = SW
       this.dateOfManu = MD
       this.devName = NA
-      if (this.sku in this.ngSkus) this.sensorType = this.ngSkus[this.sku]
+      if (this.sku in ngSkus) this.sensorType = ngSkus[this.sku]
       else this.sensorType = 'unknown' // or gen1 devices
 
       if (this.hIntervalCheckDevInfo) {
