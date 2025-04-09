@@ -807,6 +807,7 @@ export default {
         'G6', 'INOISE'
       ], 
     }
+    this.singleRadarRegs = ['G0', 'G3', 'IR', 'CR', 'AL', 'DL', 'UR']
     this.G9Regs = {
       //"G9" = ORed these regs
       "HC": { name: "Heating Control", i2cAddr: ["1"], drvVer: ["2.9"], commVer: ["2.8"] },
@@ -1110,12 +1111,16 @@ export default {
     async readFromDeviceAsync() {
       let regList = [...this.commonRegs]
 
-      if (this.sensorType !== 'unknown' && this.sensorType in ngSensorTypes) {
+      if (this.sensorType !== 'unknown' && this.sensorType !== 'single_radar' && this.sensorType in ngSensorTypes) {
         // for gen2 device
         regList = [...regList, ...this.slaveRegs['1']]
         if (ngSensorTypes[this.sensorType].indexOf("G4") !== -1) regList = [...regList, ...this.slaveRegs['2']]
         if (ngSensorTypes[this.sensorType].indexOf("G5") !== -1) regList = [...regList, ...this.slaveRegs['17']]
         if (ngSensorTypes[this.sensorType].indexOf("G6") !== -1) regList = [...regList, ...this.slaveRegs['18']]
+      }
+      else if (this.sensorType === 'single_radar') {
+        // for single radar only
+        regList = [...regList, ...this.singleRadarRegs]
       }
       else {
         // for gen1 device
@@ -1125,35 +1130,37 @@ export default {
           }
         }
       }
-      //G9
-      if (!('SW' in this.i2cAddrFromDevice)) this.i2cAddrFromDevice['SW'] = "0.1"
-      console.log('before readFromDeviceAsync, the SW=', this.i2cAddrFromDevice['SW'])
-      this.showG9Ht = this.showG9Tilt = false
-      let hasG9 = false
-      for (const regName in this.G9Regs) {
-        let show = false
-        let i = 0
-        for (const i2cAddr of this.G9Regs[regName].i2cAddr) {
-          if (i2cAddr in this.i2cAddrFromDevice
-            && compareVersions.compare(this.i2cAddrFromDevice['SW'], this.G9Regs[regName].commVer[i], '>=')
-            && compareVersions.compare(this.i2cAddrFromDevice[i2cAddr], this.G9Regs[regName].drvVer[i], '>=')) {
-            show = true
-            break
+      // G9, single_radar doesn't have
+      if (this.sensorType !== 'single_radar') {
+        if (!('SW' in this.i2cAddrFromDevice)) this.i2cAddrFromDevice['SW'] = "0.1"
+        console.log('before readFromDeviceAsync, the SW=', this.i2cAddrFromDevice['SW'])
+        this.showG9Ht = this.showG9Tilt = false
+        let hasG9 = false
+        for (const regName in this.G9Regs) {
+          let show = false
+          let i = 0
+          for (const i2cAddr of this.G9Regs[regName].i2cAddr) {
+            if (i2cAddr in this.i2cAddrFromDevice
+              && compareVersions.compare(this.i2cAddrFromDevice['SW'], this.G9Regs[regName].commVer[i], '>=')
+              && compareVersions.compare(this.i2cAddrFromDevice[i2cAddr], this.G9Regs[regName].drvVer[i], '>=')) {
+              show = true
+              break
+            }
+            else if (compareVersions.compare(this.hwVersion, '2.0', '>=')) {
+              show = true
+              break
+            }
+            i++
           }
-          else if (compareVersions.compare(this.hwVersion, '2.0', '>=')) {
-            show = true
-            break
+          if (show) {
+            if (regName === 'HC') this.showG9Ht = true
+            if (regName === 'TD') this.showG9Tilt = true
+            regList.push(regName)
+            hasG9 = true
           }
-          i++
         }
-        if (show) {
-          if (regName === 'HC') this.showG9Ht = true
-          if (regName === 'TD') this.showG9Tilt = true
-          regList.push(regName)
-          hasG9 = true
-        }
+        if (hasG9) regList.push('G9')
       }
-      if (hasG9) regList.push('G9')
       console.log('all reg to be read:', regList)
       //read AD first
       ipcRenderer.send('ap-addr-req')

@@ -1,6 +1,6 @@
 {
   "name": "sensecap_one_cfg_tool",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "private": true,
   "description": "SenseCAP One Configuration Tool",
   "author": "Jack Shao <jack.shao@seeed.cc>",
